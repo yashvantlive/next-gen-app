@@ -1,106 +1,88 @@
-'use client';
+import React from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function EducationSection({ data, onAdd, onUpdate, onDelete }) {
+  const handleChange = (id, field, value) => {
+    const item = data.find(i => i.id === id);
+    onUpdate(id, { ...item, [field]: value });
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Education</h2>
-          <p className="text-sm text-gray-500 mt-1">Add your educational background</p>
-        </div>
-        <button
-          onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Education
+    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in fade-in">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Education</h2>
+        <button onClick={onAdd} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus size={16} /> Add Education
         </button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No education entries yet. Click "Add Education" to get started.</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {data.map((edu) => (
-            <div key={edu.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    Degree/Qualification <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={edu.degree}
-                    onChange={(e) => onUpdate(edu.id, { ...edu, degree: e.target.value })}
-                    placeholder="B.Tech in Computer Science"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
+      <div className="space-y-6">
+        {data.map((edu) => (
+          <div key={edu.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 relative group">
+            <button 
+              onClick={() => onDelete(edu.id)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={16} />
+            </button>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Year</label>
-                  <input
-                    type="text"
-                    value={edu.year}
-                    onChange={(e) => onUpdate(edu.id, { ...edu, year: e.target.value })}
-                    placeholder="2020-2024"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">College / School Name</label>
+                <input
+                  type="text"
+                  value={edu.institution || ''} 
+                  onChange={(e) => handleChange(edu.id, 'institution', e.target.value)}
+                  placeholder="Ex: IIT Bombay / DPS School"
+                  className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
+                />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Institution/College</label>
-                  <input
-                    type="text"
-                    value={edu.institution}
-                    onChange={(e) => onUpdate(edu.id, { ...edu, institution: e.target.value })}
-                    placeholder="ABC College"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">University</label>
-                  <input
-                    type="text"
-                    value={edu.university}
-                    onChange={(e) => onUpdate(edu.id, { ...edu, university: e.target.value })}
-                    placeholder="Delhi University"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">University / Board</label>
+                <input
+                  type="text"
+                  value={edu.university || ''}
+                  onChange={(e) => handleChange(edu.id, 'university', e.target.value)}
+                  placeholder="Ex: Mumbai University / CBSE"
+                  className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
+                />
               </div>
-
-              <div className="flex items-end gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">CGPA/Percentage</label>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Degree / Class</label>
+                <input
+                  type="text"
+                  value={edu.degree || ''}
+                  onChange={(e) => handleChange(edu.id, 'degree', e.target.value)}
+                  placeholder="Ex: B.Tech in CSE / Class XII"
+                  className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Passing Year</label>
                   <input
                     type="text"
-                    value={edu.cgpa}
-                    onChange={(e) => onUpdate(edu.id, { ...edu, cgpa: e.target.value })}
-                    placeholder="8.5/10"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    value={edu.year || ''}
+                    onChange={(e) => handleChange(edu.id, 'year', e.target.value)}
+                    placeholder="Ex: 2024"
+                    className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
-
-                <button
-                  onClick={() => onDelete(edu.id)}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-                >
-                  Remove
-                </button>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">CGPA / Percentage</label>
+                  <input
+                    type="text"
+                    value={edu.cgpa || ''}
+                    onChange={(e) => handleChange(edu.id, 'cgpa', e.target.value)}
+                    placeholder="Ex: 9.5 / 85%"
+                    className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

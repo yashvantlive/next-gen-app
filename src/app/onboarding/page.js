@@ -1,30 +1,57 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
-import { onAuthChange, getUserProfile, setUserProfile } from "@/lib/firebaseClient";
-import { getSuggestedSkills } from "@/lib/skills";
-import { useRouter } from "next/navigation";
 
-const BRANCHES = ["Computer Science", "IT", "Electrical", "Mechanical", "Civil", "Chemical", "Electronics", "Biotechnology", "Other"];
+import React, { useEffect, useState, useRef } from "react";
+import { onAuthChange, getUserProfile, setUserProfile, db } from "@/lib/firebaseClient";
+import { doc, getDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { 
+  GraduationCap, 
+  BookOpen, 
+  Calendar, 
+  Layers, 
+  ChevronRight, 
+  Check, 
+  Zap, 
+  Heart,
+  ArrowRight
+} from "lucide-react";
 
 export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [existingRole, setExistingRole] = useState("user");
+  const [isEditing, setIsEditing] = useState(false); // NEW: Track if editing
   const hydratedRef = useRef(false);
-  const [form, setForm] = useState({
-    university: "",
-    semester: "",
-    branch: "Computer Science",
-    stream: "",
-    year: "",
+  
+  // Metadata State
+  const [metadata, setMetadata] = useState({ 
+    universities: {}, 
+    branches: {}, 
+    skills: {}, 
+    interests: {} 
   });
+  const [loadingMeta, setLoadingMeta] = useState(true);
+
+  // Form State
+  const [form, setForm] = useState({
+    universityId: "",
+    branchId: "",
+    year: 1,
+    semester: 1,
+  });
+  
   const [skills, setSkills] = useState([]);
-  const [suggestions, setSuggestions] = useState(getSuggestedSkills("Computer Science"));
+  const [interests, setInterests] = useState([]);
+  
+  const [skillSuggestions, setSkillSuggestions] = useState([]);
+  const [interestSuggestions, setInterestSuggestions] = useState([]);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const router = useRouter();
 
+  // --- 1. Initial Load (Auth & Metadata) ---
   useEffect(() => {
     hydratedRef.current = true;
   }, []);
@@ -32,175 +59,352 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (!hydratedRef.current) return;
 
-    const unsub = onAuthChange(async (u) => {
-      if (!u) {
-        router.push("/auth/login");
-        return;
-      }
-      setUser(u);
-      // If profile exists, prefill form for editing; otherwise continue onboarding
-      const profile = await getUserProfile(u.uid);
-      if (profile) {
-        setForm((s) => ({
-          university: profile.university || "",
-          semester: profile.semester || "",
-          branch: profile.branch || "Computer Science",
-          stream: profile.stream || "",
-          year: profile.year || "",
-        }));
-        setSkills(profile.skills || []);
-        setSuggestions(getSuggestedSkills(profile.branch || "Computer Science"));
-      }
-      setLoading(false);
-    });
-    return () => unsub();
+    let unsubscribe = () => {};
+
+    const init = async () => {
+      unsubscribe = onAuthChange(async (u) => {
+        if (!u) {
+          router.push("/auth/login");
+          return;
+        }
+        setUser(u);
+
+        try {
+          // B. Fetch All Metadata
+          const uniSnap = await getDoc(doc(db, "metadata", "universities"));
+          const branchSnap = await getDoc(doc(db, "metadata", "branches"));
+          const skillSnap = await getDoc(doc(db, "metadata", "skills"));
+          const interestSnap = await getDoc(doc(db, "metadata", "interests"));
+          
+          const metaData = {
+            universities: uniSnap.exists() ? uniSnap.data() : {},
+            branches: branchSnap.exists() ? branchSnap.data() : {},
+            skills: skillSnap.exists() ? skillSnap.data() : {},
+            interests: interestSnap.exists() ? interestSnap.data() : {},
+          };
+          setMetadata(metaData);
+
+          // C. Fetch Existing Profile
+          const profile = await getUserProfile(u.uid);
+          if (profile) {
+            setIsEditing(true); // User exists, so this is Edit Mode
+            setForm({
+              universityId: profile.universityId || profile.university || "",
+              branchId: profile.branchId || profile.branch || "",
+              year: Number(profile.year) || 1,
+              semester: Number(profile.semester) || 1,
+            });
+            setSkills(profile.skills || []);
+            setInterests(profile.interests || []);
+            setExistingRole(profile.role || "user");
+          } else {
+            setIsEditing(false); // New User, Onboarding Mode
+          }
+        } catch (err) {
+          console.error("Init failed:", err);
+          setError("Failed to load data. Please check your connection.");
+        } finally {
+          setLoading(false);
+          setLoadingMeta(false);
+        }
+      });
+    };
+
+    init();
+    return () => { if (unsubscribe) unsubscribe(); };
   }, [router]);
 
+  // --- 2. Update Suggestions based on Branch ---
+  useEffect(() => {
+    if (form.branchId) {
+        setSkillSuggestions(metadata.skills[form.branchId] || []);
+        setInterestSuggestions(metadata.interests[form.branchId] || []);
+    } else {
+        setSkillSuggestions([]);
+        setInterestSuggestions([]);
+    }
+  }, [form.branchId, metadata]);
+
+  // --- 3. Handlers ---
   function updateField(k, v) {
     setForm((s) => ({ ...s, [k]: v }));
   }
-
-  useEffect(() => {
-    setSuggestions(getSuggestedSkills(form.branch));
-  }, [form.branch]);
-
-
-
-
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setSaving(true);
+
     try {
-      // basic validation
-      if (!form.university || !form.semester || !form.branch || !form.stream || !form.year) {
-        setError("Please fill all fields");
+      if (!form.universityId || !form.branchId) {
+        setError("Please select your University and Branch.");
         setSaving(false);
         return;
       }
-      if (!skills.length) {
-        setError("Please choose at least one skill");
+      
+      // Validation: Only require skills if in Editing Mode
+      if (isEditing && skills.length === 0) {
+        setError("Please add at least one skill since you are editing.");
         setSaving(false);
         return;
       }
+
       const payload = {
-        ...form,
-        skills,
-        role: "user", // Ensure role is set on save
+        universityId: form.universityId,
+        branchId: form.branchId,
+        year: Number(form.year),
+        semester: Number(form.semester),
+        skills: skills, // Save empty array if new user
+        interests: interests,
+        role: existingRole,
         updatedAt: new Date().toISOString(),
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL || null,
+        university: metadata.universities[form.universityId]?.name || form.universityId,
+        branch: metadata.branches[form.branchId] || form.branchId
       };
+
       await setUserProfile(user.uid, payload);
-      setSuccess("Profile saved");
-      setSaving(false);
+      setSuccess("Profile saved successfully!");
+      
+      setTimeout(() => {
+        router.push("/profile"); // Redirect to Profile to see the "Add Skills" prompts
+      }, 1000);
+
     } catch (err) {
       console.error(err);
-      const msg = (err && err.message) || String(err);
-      if (/permission|insufficient/i.test(msg)) {
-        setError(
-          "Permission denied: your Firestore rules may be blocking this write. See README (Firestore security rules) to allow authenticated users to write their own profile."
-        );
-      } else {
-        setError(msg);
-      }
+      setError("Failed to save profile. Please try again.");
       setSaving(false);
     }
   }
 
-  useEffect(() => {
-    let t;
-    if (success) {
-      t = setTimeout(() => {
-        setSuccess(null);
-        router.push("/profile");
-      }, 900);
-    }
-    return () => clearTimeout(t);
-  }, [success, router]);
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
+  if (loading || loadingMeta) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 text-sm font-medium animate-pulse">Setting up workspace...</p>
+        </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg bg-white rounded-lg shadow-sm p-8">
-        <h1 className="text-xl font-semibold mb-2 text-gray-900">Onboarding</h1>
-        <p className="text-sm text-gray-700 mb-2">A few quick questions to personalize your experience.</p>
-        {success && <div className="mb-3 text-sm text-green-600">{success}</div>}
+    <div className="min-h-screen bg-slate-50 py-12 px-4 font-sans text-slate-900">
+      
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-violet-200/40 blur-[100px] rounded-full"></div>
+         <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] bg-indigo-200/40 blur-[100px] rounded-full"></div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-800 mb-1">University / Board</label>
-            <input className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400" value={form.university} onChange={(e) => updateField("university", e.target.value)} placeholder="e.g., Example University" />
-          </div>
+      <div className="relative max-w-2xl mx-auto space-y-6">
+        
+        <div className="text-center mb-8">
+           <h1 className="text-3xl font-bold text-slate-900">{isEditing ? "Edit Profile" : "Welcome, Student!"}</h1>
+           <p className="text-slate-500 mt-2">{isEditing ? "Update your details below." : "Let's get you started with the basics."}</p>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-800 mb-1">Branch / Course</label>
-              <select className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900" value={form.branch} onChange={(e) => updateField("branch", e.target.value)}>
-                {BRANCHES.map((b) => (<option key={b} value={b}>{b}</option>))}
-              </select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* CARD 1: Academic Information (ALWAYS VISIBLE) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in-up">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                    <GraduationCap className="text-violet-600" size={20} />
+                    <h2 className="font-bold text-slate-800">Academic Details</h2>
+                </div>
+                
+                <div className="p-6 space-y-6">
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">University / College</label>
+                        <div className="relative">
+                            <select 
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
+                            value={form.universityId} 
+                            onChange={(e) => updateField("universityId", e.target.value)}
+                            >
+                            <option value="">Select University</option>
+                            {Object.entries(metadata.universities).map(([id, data]) => (
+                                <option key={id} value={id}>{data.name}</option>
+                            ))}
+                            </select>
+                            <ChevronRight className="absolute right-4 top-3.5 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">Branch / Course</label>
+                        <div className="relative">
+                            <select 
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
+                            value={form.branchId} 
+                            onChange={(e) => updateField("branchId", e.target.value)}
+                            >
+                            <option value="">Select Branch</option>
+                            {Object.entries(metadata.branches).map(([id, name]) => (
+                                <option key={id} value={id}>{name} ({id})</option>
+                            ))}
+                            </select>
+                            <ChevronRight className="absolute right-4 top-3.5 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-700">Year</label>
+                            <div className="relative">
+                                <select 
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
+                                value={form.year} 
+                                onChange={(e) => updateField("year", Number(e.target.value))}
+                                >
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                                </select>
+                                <ChevronRight className="absolute right-4 top-3.5 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-700">Semester</label>
+                            <div className="relative">
+                                <select 
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
+                                value={form.semester} 
+                                onChange={(e) => updateField("semester", Number(e.target.value))}
+                                >
+                                {[1,2,3,4,5,6,7,8].map(sem => (
+                                    <option key={sem} value={sem}>Semester {sem}</option>
+                                ))}
+                                </select>
+                                <ChevronRight className="absolute right-4 top-3.5 text-slate-400 rotate-90 pointer-events-none" size={16} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div>
-              <label className="block text-sm text-gray-800 mb-1">Stream</label>
-              <input className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400" value={form.stream} onChange={(e) => updateField("stream", e.target.value)} placeholder="e.g., IT" />
-            </div>
-          </div>
+            {/* CARD 2: Skills & Interests (ONLY VISIBLE IF EDITING) */}
+            {isEditing && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in-up">
+                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                        <Zap className="text-amber-500" size={20} />
+                        <h2 className="font-bold text-slate-800">Skills & Interests</h2>
+                    </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-800 mb-1">Year</label>
-              <select className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900" value={form.year} onChange={(e) => updateField("year", e.target.value)}>
-                <option value="">Select year</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
+                    <div className="p-6 space-y-8">
+                        {/* Skills Section */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Your Skills</span>
+                                <span className="text-xs font-normal text-slate-400">{skills.length} selected</span>
+                            </label>
+                            
+                            <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
+                                {skills.length === 0 && <span className="text-slate-400 text-sm">Select skills below...</span>}
+                                {skills.map(skill => (
+                                    <span key={skill} className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-violet-100 text-violet-700 rounded-full text-xs font-bold shadow-sm animate-in zoom-in duration-200">
+                                    {skill}
+                                    <button type="button" onClick={() => setSkills(prev => prev.filter(s => s !== skill))} className="hover:text-violet-900"><Check size={12} /></button>
+                                    </span>
+                                ))}
+                            </div>
 
-            <div>
-              <label className="block text-sm text-gray-800 mb-1">Semester</label>
-              <select className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900" value={form.semester} onChange={(e) => updateField("semester", e.target.value)}>
-                <option value="">Select semester</option>
-                {Array.from({ length: 8 }).map((_, i) => (<option key={i+1} value={String(i+1)}>{i+1}</option>))}
-              </select>
-            </div>
-          </div>
+                            {/* Suggestions */}
+                            {skillSuggestions.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Suggested for your branch</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {skillSuggestions.map((s) => {
+                                            const isSelected = skills.includes(s);
+                                            return (
+                                                <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                                    isSelected 
+                                                    ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200' 
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-violet-300 hover:text-violet-600'
+                                                }`}
+                                                >
+                                                {isSelected ? '✓ ' : '+ '}{s}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-          <div>
-            <label className="block text-sm text-gray-800 mb-1">Skills (comma separated)</label>
-            <input value={skills.join(", ")} onChange={(e) => setSkills(e.target.value.split(",").map(s=>s.trim()).filter(Boolean))} placeholder="e.g., JavaScript, React" className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 placeholder-gray-400" />
+                        <div className="border-t border-slate-100"></div>
 
-            <div className="flex flex-wrap gap-2 mt-2">
-              {suggestions.slice(0, 8).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => {
-                    // toggle suggestion into skills
-                    setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-                  }}
-                  aria-pressed={skills.includes(s)}
-                  className={`px-2 py-1 border rounded text-sm ${skills.includes(s) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-300'}`}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+                        {/* Interests Section */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Your Interests</span>
+                                <span className="text-xs font-normal text-slate-400">{interests.length} selected</span>
+                            </label>
+                            
+                            <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
+                                {interests.length === 0 && <span className="text-slate-400 text-sm">Select interests below...</span>}
+                                {interests.map(int => (
+                                    <span key={int} className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-pink-100 text-pink-600 rounded-full text-xs font-bold shadow-sm animate-in zoom-in duration-200">
+                                    {int}
+                                    <button type="button" onClick={() => setInterests(prev => prev.filter(i => i !== int))} className="hover:text-pink-800"><Check size={12} /></button>
+                                    </span>
+                                ))}
+                            </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+                            {/* Suggestions */}
+                            {interestSuggestions.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Suggested for you</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {interestSuggestions.map((s) => {
+                                            const isSelected = interests.includes(s);
+                                            return (
+                                                <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setInterests((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                                    isSelected 
+                                                    ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200' 
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-pink-300 hover:text-pink-600'
+                                                }`}
+                                                >
+                                                {isSelected ? '✓ ' : '+ '}{s}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
-          <div className="flex justify-end">
-            <button disabled={saving} className="px-4 py-2 rounded bg-black text-white">
-              {saving ? "Saving…" : "Save and continue"}
+            {/* Error & Submit */}
+            {error && (
+                <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-sm rounded-xl flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5"></div>
+                    {error}
+                </div>
+            )}
+
+            <button 
+                type="submit" 
+                disabled={saving} 
+                className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-xl shadow-violet-200 transition-all ${
+                    success ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-violet-600 hover:bg-violet-700 hover:-translate-y-1'
+                } disabled:opacity-70 disabled:cursor-not-allowed`}
+            >
+                {success ? "Success! Redirecting..." : saving ? "Saving Profile..." : "Save & Continue"}
             </button>
-          </div>
-        </form>
 
+        </form>
       </div>
     </div>
   );

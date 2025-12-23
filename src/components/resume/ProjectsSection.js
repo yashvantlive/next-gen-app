@@ -1,90 +1,161 @@
-'use client';
+import React from 'react';
+import { Plus, Trash2, X } from 'lucide-react';
 
 export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
+  
+  const handleChange = (id, field, value) => {
+    const item = data.find(i => i.id === id);
+    onUpdate(id, { ...item, [field]: value });
+  };
+
+  const handleTechStack = (id, value) => {
+    const item = data.find(i => i.id === id);
+    const stack = value.split(',').map(s => s.trim());
+    onUpdate(id, { ...item, techStack: stack });
+  };
+
+  // --- BULLET POINTS LOGIC (Simplified: Single Text Block) ---
+
+  const addPoint = (projectId) => {
+    const project = data.find(p => p.id === projectId);
+    const currentPoints = project.points || [];
+    const newPoint = { id: Date.now(), text: '' }; // No Heading, just Text
+    onUpdate(projectId, { ...project, points: [...currentPoints, newPoint] });
+  };
+
+  const updatePoint = (projectId, pointId, val) => {
+    const project = data.find(p => p.id === projectId);
+    const updatedPoints = (project.points || []).map(p => 
+      p.id === pointId ? { ...p, text: val } : p
+    );
+    onUpdate(projectId, { ...project, points: updatedPoints });
+  };
+
+  const deletePoint = (projectId, pointId) => {
+    const project = data.find(p => p.id === projectId);
+    const updatedPoints = (project.points || []).filter(p => p.id !== pointId);
+    onUpdate(projectId, { ...project, points: updatedPoints });
+  };
+
+  // Default: Give 2 empty points if none exist
+  const ensurePoints = (project) => {
+    if (!project.points || project.points.length === 0) {
+        const initialPoints = [
+            { id: Date.now(), text: '' },
+            { id: Date.now() + 1, text: '' },
+        ];
+        onUpdate(project.id, { ...project, points: initialPoints });
+    }
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-          <p className="text-sm text-gray-500 mt-1">Showcase your best projects</p>
-        </div>
-        <button
-          onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Project
+    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-800">Projects</h2>
+        <button onClick={onAdd} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus size={16} /> Add Project
         </button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>No projects added yet. Click "Add Project" to get started.</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {data.map((project) => (
-            <div key={project.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Project Title</label>
-                <input
-                  type="text"
-                  value={project.title}
-                  onChange={(e) => onUpdate(project.id, { ...project, title: e.target.value })}
-                  placeholder="E-commerce Platform"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
+      <div className="space-y-8">
+        {data.map((proj) => {
+            const points = proj.points || [];
 
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Description</label>
-                <textarea
-                  value={project.description}
-                  onChange={(e) => onUpdate(project.id, { ...project, description: e.target.value })}
-                  placeholder="Brief description of the project and what it does..."
-                  rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
+            return (
+              <div key={proj.id} className="p-5 bg-gray-50 rounded-xl border border-gray-100 relative group transition-all hover:shadow-md">
+                
+                {/* Delete Project */}
+                <button 
+                  onClick={() => onDelete(proj.id)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-1 hover:bg-red-50 rounded"
+                  title="Delete Project"
+                >
+                  <Trash2 size={18} />
+                </button>
 
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Tech Stack (comma separated)</label>
-                <input
-                  type="text"
-                  value={project.techStack.join(', ')}
-                  onChange={(e) => {
-                    const techStack = e.target.value.split(',').map(t => t.trim()).filter(t => t);
-                    onUpdate(project.id, { ...project, techStack });
-                  }}
-                  placeholder="React, Node.js, MongoDB, Firebase"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
+                {/* Project Header */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-10">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Project Title</label>
+                    <input
+                      type="text"
+                      value={proj.title}
+                      onChange={(e) => handleChange(proj.id, 'title', e.target.value)}
+                      placeholder="e.g. E-Commerce App"
+                      className="w-full p-2 border border-gray-200 rounded-lg text-sm font-semibold focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Link / GitHub</label>
+                    <input
+                      type="text"
+                      value={proj.link}
+                      onChange={(e) => handleChange(proj.id, 'link', e.target.value)}
+                      placeholder="https://..."
+                      className="w-full p-2 border border-gray-200 rounded-lg text-sm text-blue-600 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tech Stack</label>
+                    <input
+                      type="text"
+                      value={proj.techStack ? proj.techStack.join(', ') : ''}
+                      onChange={(e) => handleTechStack(proj.id, e.target.value)}
+                      placeholder="React, Node.js, MongoDB..."
+                      className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Project Link (GitHub/Demo)</label>
-                <input
-                  type="url"
-                  value={project.link}
-                  onChange={(e) => onUpdate(project.id, { ...project, link: e.target.value })}
-                  placeholder="https://github.com/... or https://demo.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
+                {/* Bullet Points (Single Column) */}
+                <div className="mt-4">
+                    <div className="flex justify-between items-end mb-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</label>
+                        <button 
+                            onClick={() => addPoint(proj.id)}
+                            className="text-xs flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                        >
+                            <Plus size={14} /> Add Bullet
+                        </button>
+                    </div>
 
-              <button
-                onClick={() => onDelete(project.id)}
-                className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-              >
-                Remove Project
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+                    <div className="space-y-2">
+                        {points.length === 0 && (
+                             <div className="text-center py-4 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400">
+                                No details added. <button onClick={() => ensurePoints(proj)} className="text-blue-500 underline">Add default points</button>
+                             </div>
+                        )}
+
+                        {points.map((pt) => (
+                            <div key={pt.id} className="relative group/point">
+                                <textarea
+                                    placeholder="• Describe a key feature or result..."
+                                    value={pt.text || ''}
+                                    onChange={(e) => updatePoint(proj.id, pt.id, e.target.value)}
+                                    rows={1}
+                                    className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500 resize-none overflow-hidden bg-white"
+                                    style={{ minHeight: '38px' }}
+                                    onInput={(e) => {
+                                        e.target.style.height = "auto";
+                                        e.target.style.height = e.target.scrollHeight + "px";
+                                    }}
+                                />
+                                {/* Delete Point */}
+                                <button 
+                                    onClick={() => deletePoint(proj.id, pt.id)}
+                                    className="absolute top-2 right-2 bg-white text-gray-300 hover:text-red-500 border border-gray-100 rounded-full p-1 opacity-0 group-hover/point:opacity-100 transition-all"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+              </div>
+            );
+        })}
+      </div>
     </div>
   );
 }
