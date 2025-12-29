@@ -1,172 +1,146 @@
-'use client';
+import React from 'react';
+import { Plus, Trash2, X } from 'lucide-react';
 
-export default function ResumePreview({ data }) {
+export default function ExperienceSection({ data, onAdd, onUpdate, onDelete }) {
+  
+  const handleBulletChange = (expIndex, bulletIndex, val) => {
+    const item = data[expIndex];
+    const bullets = item.description ? item.description.split('\n') : [];
+    bullets[bulletIndex] = val;
+    onUpdate(item.id, { ...item, description: bullets.join('\n') });
+  };
+
+  const addBullet = (expIndex) => {
+    const item = data[expIndex];
+    const bullets = item.description ? item.description.split('\n') : [];
+    bullets.push('');
+    onUpdate(item.id, { ...item, description: bullets.join('\n') });
+  };
+
+  const removeBullet = (expIndex, bulletIndex) => {
+    const item = data[expIndex];
+    const bullets = item.description ? item.description.split('\n') : [];
+    bullets.splice(bulletIndex, 1);
+    onUpdate(item.id, { ...item, description: bullets.join('\n') });
+  };
+
   return (
-    <div className="w-full bg-white text-gray-900" style={{ fontFamily: 'Calibri, Arial, sans-serif' }}>
-      {/* A4 Page Container */}
-      <div style={{ width: '210mm', height: '297mm', margin: '0 auto', padding: '20mm', boxSizing: 'border-box', backgroundColor: 'white' }}>
-        
-        {/* Header */}
-        <div className="border-b-2 border-gray-300 pb-3 mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-1">{data.personalInfo.fullName || 'YOUR NAME'}</h1>
-          <div className="text-center text-xs text-gray-700 space-x-2">
-            {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
-            {data.personalInfo.email && data.personalInfo.phone && <span>|</span>}
-            {data.personalInfo.phone && <span>{data.personalInfo.phone}</span>}
-            {(data.personalInfo.email || data.personalInfo.phone) && data.personalInfo.location && <span>|</span>}
-            {data.personalInfo.location && <span>{data.personalInfo.location}</span>}
-          </div>
-          {(data.personalInfo.linkedIn || data.personalInfo.github) && (
-            <div className="text-center text-xs text-gray-700 space-x-2 mt-1">
-              {data.personalInfo.linkedIn && (
-                <a href={data.personalInfo.linkedIn} className="text-blue-600 hover:underline">
-                  LinkedIn
-                </a>
-              )}
-              {data.personalInfo.linkedIn && data.personalInfo.github && <span>|</span>}
-              {data.personalInfo.github && (
-                <a href={data.personalInfo.github} className="text-blue-600 hover:underline">
-                  GitHub
-                </a>
-              )}
-            </div>
-          )}
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">Experience (Optional)</h2>
+          <p className="text-sm text-gray-500">Add internships, jobs, or work experience</p>
         </div>
-
-        {/* Summary */}
-        {data.summary && (
-          <div className="mb-3">
-            <h2 className="text-sm font-bold text-gray-900 bg-gray-200 px-2 py-1 mb-2" style={{ fontSize: '11px' }}>SUMMARY</h2>
-            <p className="text-xs text-gray-800 leading-tight">{data.summary}</p>
-          </div>
-        )}
-
-        {/* Projects */}
-        {data.projects && data.projects.length > 0 && data.projects.some(p => p.title) && (
-          <div className="mb-3">
-            <h2 className="text-sm font-bold text-gray-900 bg-gray-200 px-2 py-1 mb-2" style={{ fontSize: '11px' }}>PROJECTS</h2>
-            <div className="space-y-2">
-              {data.projects.map((project, idx) => (
-                project.title && (
-                  <div key={idx} className="text-xs">
-                    <div className="flex justify-between items-start">
-                      <span className="font-bold text-gray-900">{project.title}</span>
-                      {project.link && (
-                        <a href={project.link} className="text-blue-600 hover:underline text-xs">
-                          Link
-                        </a>
-                      )}
-                    </div>
-                    {project.techStack.length > 0 && (
-                      <div className="text-gray-700">
-                        <span className="font-semibold">Tech Stack Used :</span> - {project.techStack.join(', ')}
-                      </div>
-                    )}
-                    {project.description && (
-                      <div>
-                        <ul className="list-disc list-inside text-gray-800 ml-2 mt-1">
-                          {project.description.split('\n').map((line, i) => (
-                            line.trim() && (
-                              <li key={i} className="text-gray-800">
-                                {line.trim()}
-                              </li>
-                            )
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Technical Skills */}
-        {data.skills && data.skills.length > 0 && (
-          <div className="mb-3">
-            <h2 className="text-sm font-bold text-gray-900 bg-gray-200 px-2 py-1 mb-2" style={{ fontSize: '11px' }}>TECHNICAL SKILLS</h2>
-            <div className="text-xs text-gray-800 space-y-1">
-              {Object.entries({
-                'Languages': ['JavaScript', 'TypeScript', 'Python', 'C/C++'],
-                'Front-End': ['Next.js', 'React.js', 'React Native', 'Tailwind CSS'],
-                'Back-End': ['Node.js', 'Express.js', 'RESTful APIs'],
-                'Database': ['MongoDB', 'Firebase', 'Supabase'],
-                'Tools & Platforms': ['GitHub', 'Postman', 'Canva'],
-                'Other': ['Authentication (JWT)', 'Server-Side Rendering (EJS)', 'Performance Optimization', 'AI Integration']
-              }).map(([category, items]) => (
-                <div key={category}>
-                  <span className="font-bold">{category}:</span> {data.skills.join(', ')}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Education */}
-        {data.education && data.education.length > 0 && data.education.some(e => e.degree) && (
-          <div className="mb-3">
-            <h2 className="text-sm font-bold text-gray-900 bg-gray-200 px-2 py-1 mb-2" style={{ fontSize: '11px' }}>EDUCATION</h2>
-            <div className="space-y-1">
-              {data.education.map((edu, idx) => (
-                edu.degree && (
-                  <div key={idx} className="text-xs">
-                    <div className="flex justify-between items-start">
-                      <span className="font-bold text-gray-900">{edu.degree}</span>
-                      {edu.year && <span className="text-gray-700">{edu.year}</span>}
-                    </div>
-                    <div className="text-gray-800">
-                      {edu.institution}
-                      {edu.university && ` | ${edu.university}`}
-                    </div>
-                    {edu.cgpa && <div className="text-gray-700">{edu.cgpa}</div>}
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Experience */}
-        {data.experience && data.experience.length > 0 && (
-          <div className="mb-3">
-            <h2 className="text-sm font-bold text-gray-900 bg-gray-200 px-2 py-1 mb-2" style={{ fontSize: '11px' }}>EXPERIENCE</h2>
-            <div className="space-y-2">
-              {data.experience.map((exp, idx) => (
-                <div key={idx} className="text-xs">
-                  <div className="flex justify-between items-start">
-                    <span className="font-bold text-gray-900">{exp.role}</span>
-                    {exp.duration && <span className="text-gray-700">{exp.duration}</span>}
-                  </div>
-                  <p className="text-gray-800">{exp.company}</p>
-                  {exp.description && <p className="text-gray-800 mt-1">{exp.description}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        <button 
+          onClick={onAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 transition-all shadow-sm"
+        >
+          <Plus size={14} /> Add Experience
+        </button>
       </div>
 
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-            background: white;
-          }
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          @page {
-            size: A4;
-            margin: 0;
-            padding: 0;
-          }
-        }
-      `}</style>
+      {data.map((exp, index) => (
+        <div key={exp.id} className="p-5 border border-gray-200 rounded-xl bg-white shadow-sm space-y-4 group hover:border-blue-200 transition-colors">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Role / Position</label>
+              <input 
+                type="text" 
+                value={exp.role || ''} 
+                onChange={(e) => onUpdate(exp.id, { ...exp, role: e.target.value })}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="e.g. Frontend Developer"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Company / Organization</label>
+              <input 
+                type="text" 
+                value={exp.company || ''} 
+                onChange={(e) => onUpdate(exp.id, { ...exp, company: e.target.value })}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="e.g. Tech Corp"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Duration</label>
+            <input 
+              type="text" 
+              value={exp.duration || ''} 
+              onChange={(e) => onUpdate(exp.id, { ...exp, duration: e.target.value })}
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              placeholder="e.g. June 2023 - Present"
+            />
+          </div>
+
+          {/* Changed: Experience description now matches Projects bullet style */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Key Responsibilities</label>
+               <button 
+                 onClick={() => addBullet(index)}
+                 className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+               >
+                 <Plus size={12} /> Add Bullet
+               </button>
+            </div>
+            
+            <div className="space-y-2">
+              {(exp.description ? exp.description.split('\n') : []).map((bullet, bIndex) => (
+                <div key={bIndex} className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0"></div>
+                   <input 
+                     type="text"
+                     value={bullet}
+                     onChange={(e) => handleBulletChange(index, bIndex, e.target.value)}
+                     className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                     placeholder="• Achievements, tasks, or impact..."
+                   />
+                   <button 
+                     onClick={() => removeBullet(index, bIndex)}
+                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                   >
+                     <X size={16} />
+                   </button>
+                </div>
+              ))}
+              {(!exp.description || exp.description.length === 0) && (
+                 <button 
+                   onClick={() => addBullet(index)}
+                   className="w-full py-3 border-2 border-dashed border-gray-100 rounded-lg text-xs font-bold text-gray-400 hover:border-blue-200 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+                 >
+                   <Plus size={14} /> Add your first responsibility bullet
+                 </button>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button 
+                onClick={() => onDelete(exp.id)}
+                className="w-full py-2 bg-red-50 text-red-600 font-bold rounded-lg text-xs hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            >
+                <Trash2 size={14} /> Remove Position
+            </button>
+          </div>
+
+        </div>
+      ))}
+      
+      {data.length === 0 && (
+        <div className="text-center py-10 bg-white border border-dashed border-gray-300 rounded-xl">
+            <p className="text-gray-400 text-sm mb-4">No experience added yet.</p>
+            <button 
+                onClick={onAdd}
+                className="px-6 py-2 bg-gray-900 text-white font-bold rounded-lg text-sm hover:bg-gray-800 transition-all"
+            >
+                Add Experience
+            </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,10 @@ import ExperienceSection from '../../components/resume/ExperienceSection';
 import ExtraCurricularSection from '../../components/resume/ExtraCurricularSection';
 import ResumePDF from '../../components/resume/ResumePDF';
 
-import { loadResume, saveResume, deleteResume, DEFAULT_RESUME, validateResume } from '../../lib/resumeHelpers';
+// ✅ SHARE BUTTON IMPORT
+import ShareButton from '../../components/ShareButton';
+
+import { loadResume, saveResume, deleteResume, DEFAULT_RESUME } from '../../lib/resumeHelpers';
 
 export default function ResumePage() {
   const router = useRouter();
@@ -30,6 +33,10 @@ export default function ResumePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
+
+  // --- 📱 MOBILE PREVIEW SCALING STATE ---
+  const previewContainerRef = useRef(null);
+  const [previewScale, setPreviewScale] = useState(1);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -56,6 +63,35 @@ export default function ResumePage() {
     return () => unsubscribe();
   }, [router]);
 
+  // --- 📏 SMART SCALING EFFECT ---
+  useEffect(() => {
+    if (activeTab !== 'preview') return;
+
+    const handleResize = () => {
+      if (previewContainerRef.current) {
+        const containerWidth = previewContainerRef.current.clientWidth;
+        // A4 Width is approx 794px at 96 DPI. 
+        // We add padding buffer (e.g., 32px or 40px) to prevent edge touching.
+        const targetA4Width = 794; 
+        const paddingBuffer = 32; 
+        
+        const availableWidth = containerWidth - paddingBuffer;
+        
+        // Calculate Scale Ratio
+        const scale = Math.min(availableWidth / targetA4Width, 1);
+        
+        setPreviewScale(scale > 0 ? scale : 1);
+      }
+    };
+
+    // Initial Calculation
+    handleResize();
+
+    // Listen for window resize
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [activeTab]);
+
   const showToast = (msg) => {
     setSuccess(msg);
     setTimeout(() => setSuccess(''), 3000);
@@ -68,7 +104,6 @@ export default function ResumePage() {
     showToast('Preparing PDF...');
     
     try {
-      // Dynamic imports
       const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
       
@@ -76,9 +111,9 @@ export default function ResumePage() {
         ? `${profile.displayName.replace(/\s+/g, '_')}_Resume.pdf` 
         : 'My_Resume.pdf';
 
-      // Capture the element as canvas
+      // 1. Generate Image from DOM
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2, // Higher scale for better quality
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
@@ -88,15 +123,10 @@ export default function ResumePage() {
 
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       
-      // A4 dimensions in mm
+      // A4 Dimensions in mm
       const pdfWidth = 210;
       const pdfHeight = 297;
       
-      // Calculate image dimensions to fit A4
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      // Create PDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -104,17 +134,57 @@ export default function ResumePage() {
         compress: true
       });
 
-      // If content fits in one page
-      if (imgHeight <= pdfHeight) {
-        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      // Calculate Image Dimensions to fit PDF
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfImgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      // Variables to track where the image is drawn (for link mapping)
+      let renderX = 0;
+      let renderY = 0;
+      let renderW = pdfWidth;
+      let renderH = pdfImgHeight;
+
+      // Logic to fit content if it's too tall (or just fit width if it fits)
+      if (pdfImgHeight <= pdfHeight) {
+        // Fits vertically, use full width
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfImgHeight);
       } else {
-        // Scale down to fit one page
-        const scaledHeight = pdfHeight;
-        const scaledWidth = (canvas.width * pdfHeight) / canvas.height;
-        const xOffset = (pdfWidth - scaledWidth) / 2;
-        
-        pdf.addImage(imgData, 'JPEG', xOffset, 0, scaledWidth, scaledHeight);
+        // Too tall, scale to fit height (and center horizontally)
+        renderH = pdfHeight;
+        renderW = (imgProps.width * pdfHeight) / imgProps.height;
+        renderX = (pdfWidth - renderW) / 2;
+        pdf.addImage(imgData, 'JPEG', renderX, 0, renderW, renderH);
       }
+
+      // -----------------------------------------------------------
+      // ✅ FIX: MANUALLY ADD CLICKABLE LINKS OVER THE IMAGE
+      // -----------------------------------------------------------
+      const links = element.querySelectorAll('a');
+      const domRect = element.getBoundingClientRect();
+      
+      // Scale Factor: Ratio of PDF Width (mm) to DOM Scroll Width (px)
+      // This maps pixels on screen to millimeters on PDF
+      const scaleFactor = renderW / element.scrollWidth;
+
+      links.forEach(link => {
+        if (!link.href) return;
+
+        const linkRect = link.getBoundingClientRect();
+        
+        // Calculate relative position within the resume container
+        const relativeX = linkRect.left - domRect.left;
+        const relativeY = linkRect.top - domRect.top;
+        
+        // Convert to PDF coordinates
+        const pdfLinkX = renderX + (relativeX * scaleFactor);
+        const pdfLinkY = renderY + (relativeY * scaleFactor);
+        const pdfLinkW = linkRect.width * scaleFactor;
+        const pdfLinkH = linkRect.height * scaleFactor;
+
+        // Add invisible clickable area
+        pdf.link(pdfLinkX, pdfLinkY, pdfLinkW, pdfLinkH, { url: link.href });
+      });
+      // -----------------------------------------------------------
 
       pdf.save(fileName);
       showToast('Downloaded!');
@@ -158,7 +228,7 @@ export default function ResumePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
-      {/* 1. HIDDEN PDF CONTAINER - EXACT MATCH TO PREVIEW */}
+      {/* 1. HIDDEN PDF CONTAINER - For Generation Only */}
       <div style={{ position: 'absolute', left: '-10000px', top: 0 }}>
         <div id="resume-pdf">
           <ResumePDF data={resume} />
@@ -166,7 +236,6 @@ export default function ResumePage() {
       </div>
 
       <style jsx global>{`
-        /* This ensures the PDF rendering engine sees the exact same dimensions */
         #resume-pdf { 
           width: 210mm; 
           min-height: 297mm; 
@@ -188,23 +257,29 @@ export default function ResumePage() {
         <h1 className="text-xl font-bold text-gray-800 hidden sm:block">Resume Builder</h1>
         
         <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
-           <div className="flex gap-2">
+           <div className="flex gap-2 items-center">
+             <ShareButton 
+                type="resume"
+                data={{ fullName: resume.personalInfo?.fullName || "My Resume" }}
+                customClass="flex items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-sm font-bold shadow-sm"
+             />
+
              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg text-sm font-medium">
-               <Save size={16} /> Save
+               <Save size={16} /> <span className="hidden sm:inline">Save</span>
              </button>
              <button onClick={() => { handleSave(); generatePDF(); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium">
-               <Download size={16} /> PDF
+               <Download size={16} /> <span className="hidden sm:inline">PDF</span>
              </button>
            </div>
 
-           <div className="flex bg-gray-100 p-1 rounded-lg ml-4">
-             <button onClick={()=>setActiveTab('edit')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab==='edit'?'bg-white text-blue-600 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>Edit</button>
-             <button onClick={()=>setActiveTab('preview')} className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab==='preview'?'bg-white text-blue-600 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>Preview</button>
+           <div className="flex bg-gray-100 p-1 rounded-lg ml-2 sm:ml-4">
+             <button onClick={()=>setActiveTab('edit')} className={`px-3 sm:px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab==='edit'?'bg-white text-blue-600 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>Edit</button>
+             <button onClick={()=>setActiveTab('preview')} className={`px-3 sm:px-4 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab==='preview'?'bg-white text-blue-600 shadow-sm':'text-gray-500 hover:text-gray-700'}`}>Preview</button>
            </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 py-8">
         {activeTab === 'edit' ? (
           <div className="space-y-8 animate-in fade-in">
              <PersonalInfo data={resume.personalInfo || {}} onChange={updateInfo} />
@@ -215,9 +290,9 @@ export default function ResumePage() {
              <ExperienceSection data={resume.experience || []} onAdd={addExp} onUpdate={updExp} onDelete={delExp} />
              <ExtraCurricularSection data={resume.extraCurricular || []} onChange={updExtra} />
              
-             <div className="flex justify-between items-center pt-10 border-t border-gray-200 mt-10">
+             <div className="flex justify-between items-center pt-10 border-t border-gray-200 mt-10 pb-10">
                <button onClick={handleClear} className="flex items-center gap-2 px-5 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium">
-                 <RefreshCw size={16} /> Clear All Data
+                 <RefreshCw size={16} /> <span className="hidden sm:inline">Clear Data</span>
                </button>
                <button onClick={handleSave} className="flex items-center gap-2 px-8 py-3 bg-gray-900 text-white hover:bg-gray-800 rounded-xl text-sm font-bold shadow-lg">
                  Save Progress
@@ -225,10 +300,25 @@ export default function ResumePage() {
              </div>
           </div>
         ) : (
-          <div className="bg-gray-100 p-8 min-h-[600px] flex justify-center rounded-xl border border-gray-200">
-             {/* WEB PREVIEW - Using ResumePDF to guarantee Match */}
-             <div className="w-full max-w-[210mm] bg-white shadow-2xl min-h-[297mm] origin-top scale-90 sm:scale-100 transition-transform">
-                <ResumePDF data={resume} />
+          /* ✅ RESPONSIVE PREVIEW CONTAINER */
+          <div className="bg-gray-100 min-h-[600px] flex justify-center items-start pt-8 pb-8 rounded-xl border border-gray-200 overflow-hidden relative">
+             <div 
+               ref={previewContainerRef} 
+               className="w-full flex justify-center"
+             >
+               <div 
+                 style={{
+                   width: '210mm',
+                   minHeight: '297mm',
+                   transform: `scale(${previewScale})`, 
+                   transformOrigin: 'top center',
+                   display: 'flex',
+                   marginBottom: `-${(1 - previewScale) * 100}%`
+                 }}
+                 className="bg-white shadow-2xl transition-transform duration-200 ease-out origin-top"
+               >
+                  <ResumePDF data={resume} />
+               </div>
              </div>
           </div>
         )}

@@ -1,41 +1,94 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { onAuthChange } from "../lib/firebaseClient"; // Firebase listener check path
+import { 
+  Check, 
+  ArrowRight, 
+  FileText, 
+  FolderOpen, 
+  XCircle, 
+  CheckCircle2, 
+  Search, 
+  Filter, 
+  ListTodo, 
+  UserSquare,
+  ChevronRight,
+  ChevronDown
+} from "lucide-react";
 
-export default function Home() {
-  const [showTerms, setShowTerms] = useState(false);
-  const [mounted, setMounted] = useState(false);
+// --- NOTE: Metadata cannot be exported from a "use client" component in Next.js.
+// Move this object to src/app/layout.js if you need SEO titles for this page.
+const metadataConfig = {
+  title: 'YOU LEARN | Organize Your Engineering Syllabus & PYQs',
+  description: 'Stop drowning in PDFs. A calm, organized system for Indian engineering students to track syllabus, solve PYQs, and plan daily study without the chaos.',
+  openGraph: {
+    title: 'Stop drowning in PDFs. Start studying with a system.',
+    description: 'Your engineering syllabus, PYQs, and daily plan — organized in one place.',
+    url: 'https://youlearn.community',
+    siteName: 'YOU LEARN',
+    locale: 'en_IN',
+    type: 'website',
+  },
+};
 
-  // Prevent hydration mismatch
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'EducationalOrganization',
+  name: 'YOU LEARN',
+  url: 'https://youlearn.community',
+  description: 'Free syllabus tracking, PYQ database, and study planner for Indian engineering students.',
+  audience: 'Engineering Students',
+  keywords: 'engineering syllabus, previous year question papers, engineering PYQs, semester planner, AKU, RGPV',
+  isAccessibleForFree: true
+};
+
+export default function LandingPage() {
+  const router = useRouter();
+
+  // --- AUTO REDIRECT LOGIC ---
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const unsubscribe = onAuthChange((user) => {
+      if (user) {
+        // If user is logged in, redirect to Dashboard immediately
+        router.push("/home");
+      }
+    });
 
-  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
+    return () => unsubscribe();
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 selection:bg-violet-200 selection:text-violet-900 font-sans text-slate-900">
+    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900">
       
-      {/* NAVIGATION */}
-      <nav className="fixed top-0 w-full z-40 border-b border-slate-200/60 bg-white/70 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-violet-200">
-              S
+      {/* Inject JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* --- NAVIGATION --- */}
+      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-sm border-b border-slate-100 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm shadow-violet-200">
+              Y
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800">StudyApp</span>
+            <span className="font-bold text-xl tracking-tight text-slate-900">YOU LEARN</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-6">
             <Link 
               href="/auth/login" 
-              className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors"
+              className="hidden sm:block text-slate-500 hover:text-violet-700 font-medium transition-colors"
             >
-              Sign in
+              Log in
             </Link>
             <Link
               href="/auth/login"
-              className="hidden sm:inline-flex px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-all shadow-md hover:shadow-lg"
+              className="px-6 py-2.5 bg-violet-600 text-white font-medium rounded-full hover:bg-violet-700 transition-all shadow-md shadow-violet-200 hover:shadow-lg"
             >
               Get Started
             </Link>
@@ -43,257 +96,417 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="pt-24 pb-16">
-        {/* HERO SECTION */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center py-12 lg:py-20">
+      <main className="pt-32 pb-24">
+        
+        {/* --- SECTION 1: HERO --- */}
+        <section className="max-w-6xl mx-auto px-6 mb-32">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-slate-900 mb-6 leading-tight">
+              Stop drowning in PDFs.<br/>
+              <span className="text-violet-600">Start studying with a system.</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto">
+              Your engineering syllabus, PYQs, and daily plan — organized in one place. <br className="hidden sm:block"/>
+              Built for Indian engineering students. Zero chaos.
+            </p>
+          </div>
+
+          {/* VISUAL COMPARISON */}
+          <div className="grid md:grid-cols-2 gap-8 items-stretch mb-16">
             
-            {/* Left Content */}
-            <div className="space-y-8 animate-fade-in-up">
-              {/* Badge removed as requested */}
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                Master your <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600">
-                  academic journey.
-                </span>
-              </h1>
-              
-              <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
-                The all-in-one workspace for students. Plan tasks, track syllabus progress, and practice past questions—without the distractions.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/auth/login"
-                  className="inline-flex items-center justify-center px-8 py-4 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 transform hover:-translate-y-0.5"
-                >
-                  Start Studying Free
-                </Link>
-                <Link
-                  href="/syllabus"
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-slate-700 font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-                >
-                  Explore Syllabus
-                </Link>
+            {/* LEFT: The Mess */}
+            <div className="bg-red-50/50 rounded-3xl border border-red-100 p-8 relative overflow-hidden group min-h-[400px]">
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-200"></div>
+              <div className="mb-8">
+                <h3 className="text-red-900 font-semibold flex items-center gap-2">
+                  <XCircle size={20} className="text-red-500"/> The Old Way
+                </h3>
+                <p className="text-red-700/70 text-sm mt-1">This is how most students study.</p>
               </div>
-
-              <div className="flex items-center gap-6 pt-4 text-sm text-slate-500">
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="w-5 h-5 text-emerald-500" />
-                  <span>Free Forever</span>
+              
+              <div className="relative h-64 w-full">
+                <div className="absolute top-4 left-4 bg-white p-3 rounded-lg shadow-sm border border-red-100 rotate-[-6deg] w-48 animate-pulse-slow">
+                  <div className="flex items-center gap-2 text-red-400 mb-2"><FileText size={16}/> <span className="text-xs font-mono text-slate-400">PDF</span></div>
+                  <div className="h-2 w-3/4 bg-slate-100 rounded mb-1"></div>
+                  <div className="text-xs font-bold text-slate-700">Syllabus_FINAL_v3.pdf</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="w-5 h-5 text-emerald-500" />
-                  <span>No Ads</span>
+                
+                <div className="absolute top-20 right-8 bg-white p-3 rounded-lg shadow-sm border border-red-100 rotate-[3deg] w-40 opacity-80">
+                  <div className="flex items-center gap-2 text-green-600 mb-2"><div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center text-[10px]">W</div> <span className="text-xs text-slate-400">WhatsApp</span></div>
+                  <div className="text-xs text-slate-600">"Bhai PYQ bhejo koi..."</div>
+                </div>
+
+                <div className="absolute bottom-4 left-12 bg-white p-3 rounded-lg shadow-sm border border-red-100 rotate-[-2deg] w-52 opacity-90">
+                  <div className="flex items-center gap-2 text-violet-400 mb-2"><FolderOpen size={16}/> <span className="text-xs text-slate-400">Drive</span></div>
+                  <div className="text-xs font-bold text-slate-700">New Folder (4)</div>
+                  <div className="text-[10px] text-slate-400">Empty</div>
                 </div>
               </div>
             </div>
 
-            {/* AESTHETIC DASHBOARD MOCKUP */}
-            <div className="relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-violet-400 to-indigo-400 rounded-3xl opacity-20 blur-2xl group-hover:opacity-30 transition-opacity duration-500"></div>
-              <div className="relative bg-white border border-slate-200/60 rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden transform transition-transform duration-700 hover:scale-[1.01] hover:rotate-1">
-                
-                {/* Mockup Header */}
-                <div className="h-10 border-b border-slate-100 bg-slate-50/50 flex items-center px-4 gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-400/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-emerald-400/80"></div>
+            {/* RIGHT: YOU LEARN */}
+            <div className="bg-violet-50/50 rounded-3xl border border-violet-100 p-8 relative overflow-hidden min-h-[400px]">
+              <div className="absolute top-0 left-0 w-full h-1 bg-violet-500"></div>
+              <div className="mb-8">
+                <h3 className="text-violet-900 font-semibold flex items-center gap-2">
+                  <CheckCircle2 size={20} className="text-violet-600"/> The YOU LEARN Way
+                </h3>
+                <p className="text-violet-700/70 text-sm mt-1">This is how a system works.</p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg shadow-violet-900/5 border border-slate-100 overflow-hidden h-64 flex flex-col">
+                <div className="h-10 border-b border-slate-50 flex items-center px-4 justify-between">
+                  <div className="flex gap-4">
+                    <div className="h-2 w-16 bg-slate-100 rounded-full"></div>
+                    <div className="h-2 w-12 bg-slate-100 rounded-full"></div>
                   </div>
+                  <div className="w-6 h-6 rounded-full bg-violet-100"></div>
                 </div>
-
-                {/* Mockup Content */}
-                <div className="p-6 space-y-6">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <h3 className="text-2xl font-bold text-slate-800">Good Morning!</h3>
-                      <p className="text-slate-500 text-sm">You have 4 tasks pending today.</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-violet-600">85%</div>
-                      <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Weekly Goal</div>
-                    </div>
+                <div className="flex-1 flex">
+                  <div className="w-1/3 border-r border-slate-50 p-4 space-y-3 bg-slate-50/30">
+                    <div className="h-2 w-2/3 bg-violet-200 rounded-full"></div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full"></div>
+                    <div className="h-2 w-3/4 bg-slate-200 rounded-full"></div>
                   </div>
-
-                  {/* Task List Mockup */}
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-violet-50/50 border border-violet-100 flex items-center justify-between group/item hover:bg-violet-50 transition-colors cursor-default">
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full border-2 border-violet-400 flex items-center justify-center"></div>
-                        <div>
-                          <div className="font-semibold text-slate-800">Physics: Chapter 5</div>
-                          <div className="text-xs text-violet-500 font-medium">High Priority • 2 hrs</div>
-                        </div>
+                  <div className="flex-1 p-5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 w-32 bg-slate-800 rounded"></div>
+                      <div className="h-6 px-3 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full flex items-center">On Track</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 p-2 rounded-lg bg-violet-50 border border-violet-100">
+                        <div className="w-4 h-4 rounded border-2 border-violet-500 bg-violet-500 text-white flex items-center justify-center"><Check size={10}/></div>
+                        <div className="h-2 w-32 bg-slate-600 rounded-full"></div>
                       </div>
-                      <span className="px-2 py-1 rounded-md bg-white text-xs font-bold text-violet-700 shadow-sm">Do Now</span>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-white border border-slate-100 flex items-center justify-between opacity-75">
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>
-                        <div>
-                          <div className="font-semibold text-slate-700">Math: PYQ 2023</div>
-                          <div className="text-xs text-slate-400">Medium Priority • 45 min</div>
-                        </div>
+                      <div className="flex items-center gap-3 p-2 rounded-lg border border-slate-100">
+                        <div className="w-4 h-4 rounded border-2 border-slate-300"></div>
+                        <div className="h-2 w-24 bg-slate-300 rounded-full"></div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="pt-2">
-                    <div className="flex justify-between text-xs font-medium text-slate-500 mb-1">
-                      <span>Syllabus Completion</span>
-                      <span>42%</span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[42%] rounded-full"></div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+
+          </div>
+
+          {/* Primary CTA */}
+          <div className="text-center">
+            <Link 
+              href="/auth/login" 
+              className="inline-flex items-center gap-2 px-10 py-4 bg-violet-600 hover:bg-violet-700 text-white text-lg font-semibold rounded-xl shadow-xl shadow-violet-200 transition-transform hover:-translate-y-1"
+            >
+              Organize My Semester <ArrowRight size={20} className="text-amber-300" />
+            </Link>
+            
+            <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-slate-500 font-medium">
+              <span className="flex items-center gap-2"><Check size={16} className="text-violet-600"/> No signup needed to explore</span>
+              <span className="flex items-center gap-2"><Check size={16} className="text-violet-600"/> Works offline (PWA)</span>
+              <span className="flex items-center gap-2"><Check size={16} className="text-violet-600"/> No ads. No noise.</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* FEATURES GRID */}
-        <section className="mt-16 border-t border-slate-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-base font-semibold text-violet-600 uppercase tracking-wide">Why StudyApp?</h2>
-              <p className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Everything you need to focus.</p>
-              <p className="mt-4 text-lg text-slate-600">Clean design meets powerful tracking. No clutter, just clarity.</p>
+        {/* --- SECTION 2: THE PROBLEM --- */}
+        <section className="max-w-6xl mx-auto px-6 mb-32">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900">Does this feel familiar?</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <ProblemCard 
+              icon={<FileText className="text-slate-400" />}
+              title="PDF Overload"
+              text="Your syllabus is buried inside a 47-page PDF you downloaded in week one. Finding one topic takes 10 minutes."
+            />
+            <ProblemCard 
+              icon={<UserSquare className="text-slate-400" />}
+              title="PYQ Chaos"
+              text="Previous year questions scattered across 8 WhatsApp groups. Half the files don't open. The other half are blurry."
+            />
+            <ProblemCard 
+              icon={<ListTodo className="text-slate-400" />}
+              title="Fake Productivity"
+              text="Three to-do apps installed. None of them understand your semester or exam dates."
+            />
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-xl font-medium text-slate-700">
+              Engineering is hard.<br/>
+              <span className="text-slate-400">Your study setup shouldn’t be.</span>
+            </p>
+          </div>
+        </section>
+
+        {/* --- SECTION 3: THE SOLUTION (Linked to Landing Pages) --- */}
+        <section className="bg-slate-50 py-24 border-y border-slate-200">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything you need. Nothing you don’t.</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <FeatureCard 
-                icon={<LayoutIcon />}
-                title="Smart Planning" 
-                desc="Prioritize tasks with smart tagging and effortless deadline management."
+            <div className="grid md:grid-cols-2 gap-8">
+              
+              {/* A) SYLLABUS */}
+              <ToolCard 
+                href="/syllabus"
+                title="Syllabus Navigator"
+                desc="Your exact university syllabus. Click any topic to see related PYQs."
+                tag="Public Access"
+              >
+                <div className="bg-white rounded-lg border border-slate-200 p-4 w-full h-full shadow-sm flex flex-col gap-2 group-hover:border-violet-300 transition-colors">
+                  <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                    <ChevronDown size={16}/> Semester 3
+                  </div>
+                  <div className="pl-4 space-y-2">
+                    <div className="flex items-center gap-2 text-violet-700 text-sm bg-violet-50 p-1.5 rounded cursor-pointer">
+                      <ChevronDown size={14}/> Data Structures
+                    </div>
+                    <div className="pl-6 space-y-1.5 border-l-2 border-slate-100 ml-2">
+                      <div className="text-xs text-slate-500 hover:text-violet-600 cursor-pointer flex justify-between">
+                        1.1 Arrays & Linked Lists
+                        <span className="text-[10px] bg-slate-100 px-1 rounded text-slate-400">Theory</span>
+                      </div>
+                      <div className="text-xs text-slate-500 hover:text-violet-600 cursor-pointer">1.2 Stacks & Queues</div>
+                    </div>
+                  </div>
+                </div>
+              </ToolCard>
+
+              {/* B) PYQ */}
+              <ToolCard 
+                href="/pyq"
+                title="PYQ Database"
+                desc="15,000+ PYQs. Properly organized. No downloads. No junk files."
+                tag="Public Access"
+              >
+                <div className="bg-white rounded-lg border border-slate-200 p-4 w-full h-full shadow-sm flex flex-col gap-3 group-hover:border-violet-300 transition-colors">
+                  <div className="flex gap-2">
+                    <div className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1.5 flex items-center gap-2">
+                      <Search size={12} className="text-slate-400"/>
+                      <div className="h-1.5 w-16 bg-slate-200 rounded-full"></div>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-200 p-1.5 rounded text-slate-400"><Filter size={12}/></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-[10px] px-2 py-0.5 bg-violet-100 text-violet-700 rounded-full font-medium">2023</span>
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Mid-Sem</span>
+                  </div>
+                  <div className="space-y-2 mt-1">
+                    <div className="p-2 border border-slate-100 rounded hover:bg-slate-50 transition-colors">
+                      <div className="h-1.5 w-3/4 bg-slate-700 rounded mb-1.5"></div>
+                      <div className="h-1 w-1/2 bg-slate-300 rounded"></div>
+                    </div>
+                    <div className="p-2 border border-slate-100 rounded hover:bg-slate-50 transition-colors">
+                      <div className="h-1.5 w-2/3 bg-slate-700 rounded mb-1.5"></div>
+                      <div className="h-1 w-1/3 bg-slate-300 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              </ToolCard>
+
+              {/* C) DAILY PLANNER (Links to New Landing Page) */}
+              <ToolCard 
+                href="/todo-study-planner"
+                title="Daily Planner"
+                desc="A daily plan that understands your syllabus. Small steps. No overwhelm."
+                tag="Interactive Demo"
+              >
+                <div className="bg-white rounded-lg border border-slate-200 p-4 w-full h-full shadow-sm flex flex-col gap-3 group-hover:border-violet-300 transition-colors">
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                    <span className="text-xs font-bold text-slate-700">Today's Focus</span>
+                    <span className="text-[10px] text-slate-400">2 Pending</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 group/item cursor-pointer">
+                      <div className="w-4 h-4 rounded border border-slate-300 group-hover/item:bg-violet-500 group-hover/item:border-violet-500 transition-colors"></div>
+                      <div className="h-1.5 w-32 bg-slate-600 rounded"></div>
+                    </div>
+                    <div className="flex items-center gap-3 opacity-50">
+                      <div className="w-4 h-4 rounded border bg-violet-500 border-violet-500 flex items-center justify-center text-white"><Check size={10}/></div>
+                      <div className="h-1.5 w-24 bg-slate-400 rounded line-through"></div>
+                    </div>
+                  </div>
+                </div>
+              </ToolCard>
+
+              {/* D) RESUME BUILDER (Links to New Landing Page) */}
+              <ToolCard 
+                href="/resume-builder"
+                title="Resume Builder"
+                desc="Your resume grows as you study. Auto-formatted for internships."
+                tag="See Samples"
+              >
+                <div className="bg-white rounded-lg border border-slate-200 p-4 w-full h-full shadow-sm flex flex-col gap-3 group-hover:border-violet-300 transition-colors relative overflow-hidden">
+                  <div className="flex gap-3 items-center mb-1">
+                    <div className="w-8 h-8 bg-slate-100 rounded-full"></div>
+                    <div className="space-y-1">
+                      <div className="h-2 w-20 bg-slate-800 rounded"></div>
+                      <div className="h-1.5 w-12 bg-slate-400 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 w-full bg-slate-100 rounded group-hover:bg-violet-50 transition-colors"></div>
+                    <div className="h-1.5 w-5/6 bg-slate-100 rounded group-hover:bg-violet-50 transition-colors"></div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded group-hover:bg-violet-50 transition-colors"></div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-amber-100 text-amber-700 text-[8px] font-bold rounded uppercase">
+                    ATS Ready
+                  </div>
+                </div>
+              </ToolCard>
+
+            </div>
+          </div>
+        </section>
+
+        {/* --- SECTION 4: SOCIAL PROOF --- */}
+        <section className="max-w-6xl mx-auto px-6 py-24 mb-16">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-6">Built by students who were tired of the mess.</h2>
+              <div className="flex gap-8 mb-8">
+                <div>
+                  <p className="text-3xl font-bold text-violet-700">2,147</p>
+                  <p className="text-sm text-slate-500">Students</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-violet-700">15k+</p>
+                  <p className="text-sm text-slate-500">PYQs Organized</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-amber-500">4.8/5</p>
+                  <p className="text-sm text-slate-500">User Rating</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <TestimonialCard 
+                name="Vikram" 
+                uni="AKU, Patna" 
+                text="I stopped using 3 different apps. This just works. The syllabus tree is exactly what I needed."
               />
-              <FeatureCard 
-                icon={<BookIcon />}
-                title="Syllabus Tracker" 
-                desc="Visual progress bars for every subject. Know exactly where you stand."
-              />
-              <FeatureCard 
-                icon={<ClockIcon />}
-                title="Past Papers" 
-                desc="Access years of PYQs instantly. Organized by chapter and difficulty."
-              />
-              <FeatureCard 
-                icon={<ShieldIcon />}
-                title="Private & Secure" 
-                desc="Your academic data is stored locally or encrypted. Your privacy matters."
+              <TestimonialCard 
+                name="Sanya" 
+                uni="RGPV, Bhopal" 
+                text="Finally found clear PYQs. No ads, no fake download buttons. Saved me during mid-sems."
               />
             </div>
           </div>
         </section>
+
+        {/* --- SECTION 5: FINAL PUSH (UPGRADED DESIGN) --- */}
+        <section className="max-w-3xl mx-auto px-6 text-center">
+          {/* Replaced Heavy Purple Box with Premium White Card + Gradient Border */}
+          <div className="relative bg-white rounded-3xl p-10 sm:p-14 shadow-2xl shadow-violet-200 border border-slate-100 overflow-hidden">
+            {/* Subtle Gradient Glow Background */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-violet-500 via-indigo-500 to-violet-500"></div>
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-100 rounded-full blur-3xl opacity-50"></div>
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-100 rounded-full blur-3xl opacity-50"></div>
+
+            <div className="relative z-10">
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
+                Start when you’re ready. <br/>We’ll be here.
+              </h2>
+              <p className="text-slate-500 mb-8 max-w-lg mx-auto">
+                Everything is free. Use it to check a single syllabus topic, or organize your whole semester. It's up to you.
+              </p>
+              
+              <Link 
+                href="/auth/login" 
+                className="inline-flex items-center gap-2 px-10 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-xl shadow-slate-200"
+              >
+                Build My Study Space <ArrowRight size={18} />
+              </Link>
+              
+              <p className="text-xs font-semibold text-violet-600 mt-4 tracking-wide">
+                TAKES 30 SECONDS • NO EMAIL REQUIRED TO EXPLORE
+              </p>
+
+              <div className="mt-8 pt-8 border-t border-slate-100 flex flex-wrap justify-center gap-6 text-xs text-slate-400 font-medium">
+                <span className="flex items-center gap-1"><Check size={12} className="text-emerald-500"/> Free forever</span>
+                <span className="flex items-center gap-1"><Check size={12} className="text-emerald-500"/> No credit card</span>
+                <span className="flex items-center gap-1"><Check size={12} className="text-emerald-500"/> Your data stays local</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-50 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-             <div className="w-6 h-6 bg-slate-800 rounded flex items-center justify-center text-white text-xs font-bold">
-              S
+      {/* FOOTER (FIXED ALIGNMENT) */}
+      <footer className="bg-white border-t border-slate-200 py-12 pb-32">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4">
+          
+          {/* LEFT: Logo & Copyright */}
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-slate-900 rounded flex items-center justify-center text-white font-bold text-xs">Y</div>
+              <span className="font-bold text-slate-900">YOU LEARN</span>
             </div>
-            <p className="text-sm text-slate-500">© {new Date().getFullYear()} StudyApp Inc.</p>
+            <div className="text-slate-400 text-xs">
+              © {new Date().getFullYear()} YOU LEARN
+            </div>
           </div>
           
-          <div className="flex gap-6 text-sm font-medium text-slate-600">
-            <Link href="/about" className="hover:text-violet-600 transition-colors">About</Link>
-            <button onClick={() => setShowTerms(true)} className="hover:text-violet-600 transition-colors">Terms</button>
-            <Link href="/privacy" className="hover:text-violet-600 transition-colors">Privacy</Link>
+          {/* RIGHT: Links */}
+          <div className="flex gap-8 text-sm font-medium text-slate-500">
+            <Link href="/about" className="hover:text-violet-700 transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-violet-700 transition-colors">Contact</Link>
+            <Link href="/privacy" className="hover:text-violet-700 transition-colors">Privacy</Link>
           </div>
+          
         </div>
       </footer>
 
-      {/* TERMS MODAL */}
-      {showTerms && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity"
-            onClick={() => setShowTerms(false)}
-          />
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 sm:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="text-xl font-bold text-slate-900">Terms of Service</h3>
-              <button onClick={() => setShowTerms(false)} className="text-slate-400 hover:text-slate-600">
-                <CloseIcon />
-              </button>
-            </div>
-            
-            <div className="p-6 sm:p-8 overflow-y-auto max-h-[60vh] space-y-4 text-slate-600 leading-relaxed">
-              <p className="font-medium text-slate-900">1. Acceptance of Terms</p>
-              <p>By accessing and using StudyApp, you accept and agree to be bound by the terms and provision of this agreement.</p>
-              
-              <p className="font-medium text-slate-900 mt-4">2. Use License</p>
-              <p>Permission is granted to temporarily download one copy of the materials (information or software) on StudyApp's website for personal, non-commercial transitory viewing only.</p>
-              
-              <div className="p-4 bg-amber-50 text-amber-800 text-sm rounded-lg mt-6 border border-amber-100">
-                <strong>Note:</strong> This is a demonstration project. No real legal data is processed here.
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button 
-                onClick={() => setShowTerms(false)}
-                className="px-6 py-2.5 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
-              >
-                I Understand
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-// --- SUBCOMPONENTS & ICONS ---
+// --- SUB-COMPONENTS ---
 
-function FeatureCard({ icon, title, desc }) {
+function ProblemCard({ icon, title, text }) {
   return (
-    <div className="group p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:border-violet-100 hover:shadow-xl hover:shadow-violet-100/50 transition-all duration-300">
-      <div className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-violet-600 mb-4 group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white group-hover:border-violet-600 transition-all duration-300 shadow-sm">
-        {icon}
-      </div>
+    <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+      <div className="mb-4">{icon}</div>
       <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
-      <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
+      <p className="text-slate-600 text-sm leading-relaxed">{text}</p>
     </div>
   );
 }
 
-// Inline SVGs for zero dependencies
-const LayoutIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-  </svg>
-);
-const BookIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 19.477 5.754 19 7.5 19s3.332.477 4.5 1.253v-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 19.477 18.247 19 16.5 19c-1.746 0-3.332.477-4.5 1.253" />
-  </svg>
-);
-const ClockIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const ShieldIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-const CheckIcon = ({className}) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-  </svg>
-);
-const CloseIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
+function ToolCard({ href, title, desc, tag, children }) {
+  return (
+    <Link href={href} className="group block">
+      <div className="h-full bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:shadow-violet-100/50 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+        <div className="h-40 bg-slate-50 rounded-xl mb-6 overflow-hidden flex items-center justify-center p-4">
+          {children}
+        </div>
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors">{title}</h3>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-100 px-2 py-1 rounded">{tag}</span>
+          </div>
+          <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
+        </div>
+        <div className="mt-4 flex items-center text-violet-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-[-10px] group-hover:translate-x-0">
+          Open Tool <ChevronRight size={16}/>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TestimonialCard({ name, uni, text }) {
+  return (
+    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+      <p className="text-slate-700 italic mb-4">"{text}"</p>
+      <div>
+        <p className="font-bold text-slate-900 text-sm">{name}</p>
+        <p className="text-xs text-slate-500">{uni}</p>
+      </div>
+    </div>
+  );
+}
