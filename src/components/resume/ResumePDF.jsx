@@ -148,7 +148,15 @@ export default function ResumePDF({ data }) {
                 <span style={{fontWeight:'bold', fontSize:'10.5pt'}}>{exp.duration}</span>
               </div>
               <div style={{...S.italic, marginBottom:'2px', fontSize:'10.5pt'}}>{exp.role}</div>
-              <div style={{textAlign:'justify', fontSize:'10.5pt'}}>{exp.description}</div>
+              
+              {/* Changed: Render newline-separated description as bullets */}
+              {exp.description ? (
+                <ul style={S.ul}>
+                  {exp.description.split('\n').map((line, idx) => (
+                    line.trim() ? <li key={idx} style={S.li}>{line.trim()}</li> : null
+                  ))}
+                </ul>
+              ) : null}
             </div>
           ))}
         </div>

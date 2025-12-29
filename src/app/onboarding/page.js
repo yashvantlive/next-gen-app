@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { onAuthChange, getUserProfile, setUserProfile, db } from "@/lib/firebaseClient";
+import { onAuthChange, getUserProfile, setUserProfile, db } 
+from "../../lib/firebaseClient";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { 
@@ -13,7 +14,8 @@ import {
   Check, 
   Zap, 
   Heart,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft
 } from "lucide-react";
 
 export default function OnboardingPage() {
@@ -179,6 +181,15 @@ export default function OnboardingPage() {
     }
   }
 
+  // --- 4. Helpers: Sorted Data ---
+  const sortedUniversities = Object.entries(metadata.universities).sort((a, b) => 
+    (a[1]?.name || "").localeCompare(b[1]?.name || "")
+  );
+  
+  const sortedBranches = Object.entries(metadata.branches).sort((a, b) => 
+    (a[1] || "").localeCompare(b[1] || "")
+  );
+
   if (loading || loadingMeta) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -189,21 +200,54 @@ export default function OnboardingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
       
+      {/* --- NEW HEADER --- */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center">
+            <button 
+                onClick={() => router.push('/home')}
+                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-100"
+            >
+                <ChevronLeft size={18} />
+                <span className="hidden sm:inline">Back to Home</span>
+                <span className="sm:hidden">Back</span>
+            </button>
+        </div>
+        <div className="flex items-center gap-3">
+            <button 
+                type="button"
+                onClick={() => router.push('/profile')} 
+                className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors rounded-lg hover:bg-slate-100"
+            >
+                Skip for now
+            </button>
+            <button 
+                type="submit"
+                form="onboarding-form"
+                disabled={saving}
+                className={`px-5 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all flex items-center gap-2 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+                {saving ? "Saving..." : "Save & Continue"}
+                {!saving && <ArrowRight size={16} />}
+            </button>
+        </div>
+      </header>
+
+      {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-violet-200/40 blur-[100px] rounded-full"></div>
          <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] bg-indigo-200/40 blur-[100px] rounded-full"></div>
       </div>
 
-      <div className="relative max-w-2xl mx-auto space-y-6">
+      <div className="relative max-w-2xl mx-auto space-y-6 pt-24 px-4">
         
         <div className="text-center mb-8">
            <h1 className="text-3xl font-bold text-slate-900">{isEditing ? "Edit Profile" : "Welcome, Student!"}</h1>
            <p className="text-slate-500 mt-2">{isEditing ? "Update your details below." : "Let's get you started with the basics."}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form id="onboarding-form" onSubmit={handleSubmit} className="space-y-6">
             
             {/* CARD 1: Academic Information (ALWAYS VISIBLE) */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in-up">
@@ -222,7 +266,8 @@ export default function OnboardingPage() {
                             onChange={(e) => updateField("universityId", e.target.value)}
                             >
                             <option value="">Select University</option>
-                            {Object.entries(metadata.universities).map(([id, data]) => (
+                            {/* SORTED OPTIONS */}
+                            {sortedUniversities.map(([id, data]) => (
                                 <option key={id} value={id}>{data.name}</option>
                             ))}
                             </select>
@@ -239,7 +284,8 @@ export default function OnboardingPage() {
                             onChange={(e) => updateField("branchId", e.target.value)}
                             >
                             <option value="">Select Branch</option>
-                            {Object.entries(metadata.branches).map(([id, name]) => (
+                            {/* SORTED OPTIONS */}
+                            {sortedBranches.map(([id, name]) => (
                                 <option key={id} value={id}>{name} ({id})</option>
                             ))}
                             </select>

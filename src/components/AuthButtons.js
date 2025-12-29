@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { signInWithGoogle, onAuthChange, getUserProfile } from "@/lib/firebaseClient";
-import { useRouter } from "next/navigation";
+import { signInWithGoogle, onAuthChange, getUserProfile } from "../lib/firebaseClient";
+// router ki ab zaroorat kam hai kyunki hum window.location use karenge hard refresh ke liye
+import { useRouter } from "next/navigation"; 
 
 export default function AuthButtons() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
-  // FIX: Use useState instead of useRef so the component re-renders when mounted
   const [isHydrated, setIsHydrated] = useState(false);
-  const router = useRouter();
+  const router = useRouter(); // Keeping router for onboarding push if needed, but home will use window.location
 
   useEffect(() => {
     setIsHydrated(true);
@@ -37,9 +37,11 @@ export default function AuthButtons() {
           const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
           
           if (!profile && currentPath !== "/onboarding") {
+             // Onboarding ke liye router.push theek hai
              router.push("/onboarding");
           } else if (profile && currentPath !== "/home" && currentPath !== "/profile") {
-             router.push("/home"); 
+             // ✅ CRITICAL CHANGE: Hard Reload to update Navigation Bar immediately
+             window.location.href = "/home"; 
           }
         } catch (err) {
           console.error("Error checking user profile:", err);
@@ -74,8 +76,6 @@ export default function AuthButtons() {
         setError('Unable to sign in. Please try again.');
       }
     } finally {
-      // Note: We don't set isSigning(false) immediately if successful 
-      // because we want to show the loading state until the redirect happens.
       if (!user) setIsSigning(false); 
     }
   }
@@ -84,7 +84,7 @@ export default function AuthButtons() {
   if (!isHydrated) {
     return (
       <button disabled className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-400 rounded-xl px-4 py-3.5 opacity-60 cursor-not-allowed font-medium transition-all">
-        <GoogleIcon className="grayscale opacity-50" />
+        {/* You can replace this with your GoogleIcon component */}
         <span>Loading...</span>
       </button>
     );
