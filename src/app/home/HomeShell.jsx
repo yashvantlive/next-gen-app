@@ -31,9 +31,27 @@ export default function HomeShell({
     editData: null 
   });
   
-  // ✅ Get Theme from Mood Config
-  const theme = MOODS[currentMood].colors;
-  const moodInfo = MOODS[currentMood];
+  // 🛡️ CRITICAL FIX: SAFE THEME FALLBACK SYSTEM
+  // 1. Default Fallback: MOODS की पहली key (जैसे 'productive') निकालें
+  const defaultMoodKey = Object.keys(MOODS)[0] || 'productive'; 
+  
+  // 2. Validation: अगर currentMood valid नहीं है, तो default use करें
+  const activeMoodKey = (currentMood && MOODS[currentMood]) ? currentMood : defaultMoodKey;
+  
+  // 3. Extraction: अब activeMoodKey से डेटा निकालें (यह कभी undefined नहीं होगा)
+  const moodInfo = MOODS[activeMoodKey] || MOODS[defaultMoodKey];
+  
+  // 4. Safe Access: 'colors' को सुरक्षित तरीके से निकालें
+  const theme = moodInfo?.colors || {
+    // Fallback colors if config is missing (Emergency safety)
+    bg_app: "bg-slate-50",
+    text_main: "text-slate-900",
+    text_sub: "text-slate-500",
+    border: "border-slate-200",
+    accent_bg: "bg-indigo-600",
+    gradient_text: "from-indigo-600 to-violet-600",
+    card_style: "bg-white shadow-xl shadow-indigo-100/50 border border-white",
+  };
 
   // --- BRAIN: Compute Stats ---
   const stats = useMemo(() => {
@@ -139,7 +157,7 @@ export default function HomeShell({
       <NavigationBar 
         user={user} 
         profile={profile} 
-        currentMood={currentMood} 
+        currentMood={activeMoodKey} // ✅ Use Safe Key
         onMoodChange={onMoodChange} 
         theme={theme} 
       />
