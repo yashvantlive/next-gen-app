@@ -1,108 +1,102 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import { Download, Share, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Download } from "lucide-react";
 
 export default function InstallPWA() {
-  const [supportsPWA, setSupportsPWA] = useState(false);
-  const [promptInstall, setPromptInstall] = useState(null);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // 1. Check if already installed (Standalone Mode)
-    const inStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    setIsStandalone(inStandalone);
+    setIsMounted(true);
 
-    // 2. Detect iOS Device
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isDeviceIOS = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(isDeviceIOS);
+    // Check if already installed
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) return; // Don't show if already installed
 
-    // 3. Listen for Install Prompt (Android & Desktop Chrome/Edge)
+    // Check if user already dismissed it
+    const hasSeenPopup = localStorage.getItem("pwa-popup-seen");
+    if (hasSeenPopup) return;
+
     const handler = (e) => {
-      e.preventDefault(); // Prevent default browser banner
-      setPromptInstall(e); // Save event for later
-      setSupportsPWA(true); // Show our button
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show popup automatically when prompt is available
+      setShowPopup(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // 4. Show iOS Guide (if not installed & not seen recently)
-    if (isDeviceIOS && !inStandalone) {
-        const hasSeenPrompt = localStorage.getItem("iosPwaPromptSeen");
-        if (!hasSeenPrompt) setShowIOSPrompt(true);
-    }
-
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  const handleInstallClick = async (e) => {
-    e.preventDefault();
-    if (!promptInstall) return;
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
 
-    // Show the native install prompt
-    promptInstall.prompt();
-
-    // Wait for the user to respond
-    const { outcome } = await promptInstall.userChoice;
-    if (outcome === 'accepted') {
-      setSupportsPWA(false); // Hide button if installed
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+      setShowPopup(false);
     }
   };
 
-  const closeIOSPrompt = () => {
-      setShowIOSPrompt(false);
-      localStorage.setItem("iosPwaPromptSeen", "true");
+  const handleDismiss = () => {
+    setShowPopup(false);
+    // Remember that user dismissed it
+    localStorage.setItem("pwa-popup-seen", "true");
   };
 
-  // If already installed, don't show anything
-  if (isStandalone) return null;
-
-  // If not supported and not iOS, don't render
-  if (!supportsPWA && !showIOSPrompt) return null;
+  if (!isMounted || !showPopup) return null;
 
   return (
-    // Fixed position: Higher on mobile (bottom-24) to avoid Nav, Lower on Desktop (md:bottom-6)
-    <div className="fixed bottom-24 md:bottom-6 left-1/2 transform -translate-x-1/2 z-[9999] w-full max-w-sm px-4">
-      
-      {/* ANDROID / DESKTOP BUTTON */}
-      {supportsPWA && (
-        <button
-          onClick={handleInstallClick}
-          className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl shadow-2xl font-bold text-sm hover:bg-indigo-700 transition-all active:scale-95 border border-indigo-400/50 animate-in slide-in-from-bottom-5"
-        >
-          <Download size={18} />
-          <span>Install App</span>
-        </button>
-      )}
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none p-4 pb-20 sm:pb-4">
+      {/* Backdrop (Optional: remove 'bg-black/20' if you want it completely transparent) */}
+      <div 
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity" 
+        onClick={handleDismiss} 
+        style={{ pointerEvents: 'auto' }}
+      />
 
-      {/* iOS INSTRUCTIONS (Safari Only) */}
-      {showIOSPrompt && isIOS && (
-        <div className="bg-white/95 backdrop-blur-md border border-slate-200 p-4 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-10">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex gap-3">
-                <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center text-violet-700 font-bold">Y</div>
-                <div>
-                    <p className="text-sm font-bold text-slate-900">Install YOU LEARN</p>
-                    <p className="text-xs text-slate-500">Add to Home Screen</p>
-                </div>
-            </div>
-            <button onClick={closeIOSPrompt} className="text-slate-400 hover:text-slate-600"><X size={16}/></button>
+      {/* Popup Card */}
+      <div 
+        className="relative bg-white rounded-2xl shadow-2xl p-5 w-full max-w-sm border border-slate-100 transform transition-all animate-in slide-in-from-bottom-10 pointer-events-auto"
+      >
+        <button 
+          onClick={handleDismiss} 
+          className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 p-1 bg-slate-50 rounded-full"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className="w-12 h-12 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center mb-1">
+            <Download size={24} strokeWidth={2.5} />
           </div>
           
-          <div className="space-y-2 text-xs text-slate-600 font-medium">
-            <div className="flex items-center gap-2">
-                1. Tap the <Share size={14} className="text-blue-500" /> Share button
-            </div>
-            <div className="flex items-center gap-2">
-                2. Select <span className="font-bold text-slate-800">Add to Home Screen</span>
-            </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Install App</h3>
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+              Install <strong>YOU LEARN</strong> for a better fullscreen experience and faster access.
+            </p>
           </div>
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white transform rotate-45 border-r border-b border-slate-200"></div>
+
+          <button
+            onClick={handleInstallClick}
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-violet-200 mt-2"
+          >
+            Install Now
+          </button>
+          
+          <button 
+            onClick={handleDismiss}
+            className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+          >
+            Maybe later
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -69,8 +69,6 @@ export default function ProfilePage() {
       {/* 2. MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 pt-6 space-y-8">
         
-        {/* ❌ OLD BADGE REMOVED FROM HERE */}
-
         {/* ROW 1: ACADEMIC & TARGETS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
             <AcademicDetails 
