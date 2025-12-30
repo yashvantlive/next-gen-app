@@ -8,8 +8,10 @@ export default function PersonalInfo({ data, onChange }) {
   // Helper for Toggle Switch
   const Toggle = ({ field, label }) => (
     <div className="flex items-center gap-2 mb-1">
-      <label className="relative inline-flex items-center cursor-pointer">
+      <label htmlFor={`show-${field.toLowerCase()}`} className="relative inline-flex items-center cursor-pointer">
         <input 
+          id={`show-${field.toLowerCase()}`}
+          name={`show-${field.toLowerCase()}`}
           type="checkbox" 
           className="sr-only peer"
           checked={data[`show${field}`] !== false} // Default true
@@ -26,8 +28,10 @@ export default function PersonalInfo({ data, onChange }) {
       <h2 className="text-xl font-bold text-gray-800 mb-4">Personal Information</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="col-span-1 md:col-span-2">
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
+          <label htmlFor="full-name" className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
           <input
+            id="full-name"
+            name="full-name"
             type="text"
             value={data.fullName || ''}
             onChange={(e) => handleChange('fullName', e.target.value)}
@@ -35,8 +39,10 @@ export default function PersonalInfo({ data, onChange }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+          <label htmlFor="user-email" className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
           <input
+            id="user-email"
+            name="user-email"
             type="email"
             value={data.email || ''}
             onChange={(e) => handleChange('email', e.target.value)}
@@ -44,8 +50,10 @@ export default function PersonalInfo({ data, onChange }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone</label>
+          <label htmlFor="phone-number" className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone</label>
           <input
+            id="phone-number"
+            name="phone-number"
             type="text"
             value={data.phone || ''}
             onChange={(e) => handleChange('phone', e.target.value)}
@@ -57,6 +65,8 @@ export default function PersonalInfo({ data, onChange }) {
         <div>
           <Toggle field="Linkedin" label="LinkedIn URL" />
           <input
+            id="linkedin-url"
+            name="linkedin-url"
             type="text"
             value={data.linkedin || ''}
             onChange={(e) => handleChange('linkedin', e.target.value)}
@@ -67,6 +77,8 @@ export default function PersonalInfo({ data, onChange }) {
         <div>
           <Toggle field="Github" label="GitHub URL" />
           <input
+            id="github-url"
+            name="github-url"
             type="text"
             value={data.github || ''}
             onChange={(e) => handleChange('github', e.target.value)}
@@ -77,6 +89,8 @@ export default function PersonalInfo({ data, onChange }) {
         <div className="col-span-1 md:col-span-2">
           <Toggle field="Portfolio" label="Portfolio / Website" />
           <input
+            id="portfolio-url"
+            name="portfolio-url"
             type="text"
             value={data.portfolio || ''}
             onChange={(e) => handleChange('portfolio', e.target.value)}
@@ -85,8 +99,10 @@ export default function PersonalInfo({ data, onChange }) {
           />
         </div>
         <div>
-           <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location</label>
+           <label htmlFor="location" className="block text-xs font-bold text-gray-500 uppercase mb-1">Location</label>
            <input
+            id="location"
+            name="location"
             type="text"
             value={data.location || ''}
             onChange={(e) => handleChange('location', e.target.value)}

@@ -23,21 +23,21 @@ export default function EditWidgetModal({ editConfig, setEditConfig, handleSaveW
                  }
                  return (
                    <div key={idx}>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">{field.label}</label>
+                      <label htmlFor={`widget-${field.key.replace(/\./g, '-')}`} className="block text-xs font-bold text-slate-500 uppercase mb-2">{field.label}</label>
                       {field.type === 'slider' ? (
                         <div className="flex items-center gap-4">
-                           <input type="range" name={field.key} min={field.min || 0} max={field.max || 100} defaultValue={defaultVal} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-violet-600"/>
+                           <input id={`widget-${field.key.replace(/\./g, '-')}`} type="range" name={field.key} min={field.min || 0} max={field.max || 100} defaultValue={defaultVal} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-violet-600"/>
                            <span className="text-sm font-mono text-slate-700 w-10 text-right font-bold">{defaultVal}</span>
                         </div>
                       ) : (
-                        <input type={field.type} name={field.key} step={field.step || 1} defaultValue={defaultVal} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 transition-all"/>
+                        <input id={`widget-${field.key.replace(/\./g, '-')}`} type={field.type} name={field.key} step={field.step || 1} defaultValue={defaultVal} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 transition-all"/>
                       )}
                    </div>
                  );
                })}
                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Notes & Goals</label>
-                  <textarea name="notes" rows={4} defaultValue={editConfig.data.notes} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 resize-none transition-all" placeholder="Add specific details or targets..."/>
+                  <label htmlFor="notes" className="block text-xs font-bold text-slate-500 uppercase mb-2">Notes & Goals</label>
+                  <textarea id="notes" name="notes" rows={4} defaultValue={editConfig.data.notes} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 resize-none transition-all" placeholder="Add specific details or targets..."/>
                </div>
             </form>
           </div>

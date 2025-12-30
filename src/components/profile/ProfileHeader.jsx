@@ -1,81 +1,61 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { 
   ChevronLeft, Wrench, LogOut, Shield, Edit, Settings, Mail, 
-  GraduationCap, CheckCircle2, Palette, Music, Pause, Play, SkipForward, 
-  SkipBack, Volume2, X, BarChart3, Sun, Droplet, Loader2, AlertCircle
+  GraduationCap, CheckCircle2, Home, Sparkles 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, setDoc } from "firebase/firestore"; 
 import { db } from "../../lib/firebaseClient"; 
 import { getBranchAssets } from "../../lib/branchData";
+import { getSafeTheme } from "../../lib/themeUtils"; 
 import { useMusicPlayer } from "../../contexts/MusicContext"; 
-import PhysicsBackground from "./PhysicsBackground"; 
+import PhysicsBackground from "./PhysicsBackground";
+import ThemeControlSection from "./ThemeControlSection";
+import MusicPlayerSection from "./MusicPlayerSection";
 
 export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout }) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Theme Filters
-  const [filters, setFilters] = useState({ hue: 0, saturation: 100, brightness: 100 });
-  
-  // Popup Management
+  // ✅ Toggle State for Home/Y Icon Animation
+  const [showHomeIcon, setShowHomeIcon] = useState(false);
+
+  // ✅ Default filters
+  const [filters, setFilters] = useState({ hue: 0, saturation: 0, brightness: 0 });
   const [activePopup, setActivePopup] = useState(null);
 
   const togglePopup = (popupName) => {
     setActivePopup(activePopup === popupName ? null : popupName);
   };
 
-  // ✅ Music Player
-  const { 
-    isPlaying, 
-    togglePlay, 
-    play,
-    changeTrack, 
-    currentTrack, 
-    tracks, 
-    volume, 
-    setVolume, 
-    nextTrack, 
-    previousTrack,
-    isLoading,
-    error,
-    isInitialized
-  } = useMusicPlayer();
+  const { isPlaying, togglePlay, currentTrack, isLoading } = useMusicPlayer();
 
-  const theme = getBranchAssets(profile?.branchId);
+  // ⚡ PERFORMANCE FIX: Memoize Theme Calculation
+  const theme = useMemo(() => {
+    const branchTheme = getBranchAssets(profile?.branchId);
+    const defaultTheme = getSafeTheme('focused'); 
+    return branchTheme || defaultTheme;
+  }, [profile?.branchId]);
 
-  // ✅ Handle Safe Logout (Stops Music First)
+  // Safe Logout
   const handleSafeLogout = async () => {
     try {
-      if (isPlaying) {
-        await togglePlay(); // 🛑 Stop Music immediately
-      }
-    } catch (e) {
-      console.warn("Music stop failed:", e);
-    }
-    handleLogout(); // 👋 Then Log Out
+      if (isPlaying) await togglePlay(); 
+    } catch (e) { console.warn("Music stop failed:", e); }
+    handleLogout(); 
   };
 
-  // ✅ Handle Music Toggle
-  const handleMusicToggle = async (e) => {
-    e?.stopPropagation(); 
-    if (!isInitialized) return;
-    await togglePlay();
-  };
+  // ✅ Auto-Switch Icon Animation (Y <-> Home)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowHomeIcon(prev => !prev);
+    }, 4000); // Switch every 4 seconds
+    return () => clearInterval(interval);
+  }, []);
 
-  // ✅ Handle Track Change
-  const handleTrackChange = async (trackId) => {
-    changeTrack(trackId);
-    if (!isPlaying) {
-      setTimeout(async () => {
-        try { await play(); } catch(e) {}
-      }, 200);
-    }
-  };
-
-  // Load Saved Theme
+  // ✅ Load Saved Theme from Firestore
   useEffect(() => {
     const fetchSettings = async () => {
       if (!authUser?.uid) return;
@@ -84,14 +64,12 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
         if (snap.exists() && snap.data().themePreferences) {
           setFilters(snap.data().themePreferences);
         }
-      } catch (e) { 
-        console.error('Failed to load theme:', e); 
-      }
+      } catch (e) { console.error('Failed to load theme:', e); }
     };
     fetchSettings();
   }, [authUser]);
 
-  // Auto-Save Theme
+  // ✅ Auto-Save Theme to Firestore (Debounced)
   useEffect(() => {
     if (!authUser?.uid) return;
     const timeout = setTimeout(async () => {
@@ -101,9 +79,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
           { themePreferences: filters }, 
           { merge: true }
         ); 
-      } catch (err) {
-        console.error('Failed to save theme:', err);
-      }
+      } catch (err) { console.error('Failed to save theme:', err); }
     }, 1000); 
     return () => clearTimeout(timeout);
   }, [filters, authUser]);
@@ -112,24 +88,40 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
     setFilters(prev => ({ ...prev, [key]: Number(value) }));
   };
 
-  // ✅ Safe Defaults for Current Track
-  const safeTrack = currentTrack || { name: 'Select Track', artist: 'Ambient', color: '#6366F1' };
-
   return (
     <>
       <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+           
+           {/* ✅ LEFT SIDE: Animated Branding & Home Link */}
            <div className="flex items-center gap-3">
-             <Link href="/home" className="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all active:scale-95">
-               <ChevronLeft size={22} strokeWidth={2.5} />
+             <Link href="/home" className="relative w-10 h-10 flex items-center justify-center bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 overflow-hidden group cursor-pointer">
+                {/* Y Logo State */}
+                <div className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out ${showHomeIcon ? 'opacity-0 rotate-180 scale-50' : 'opacity-100 rotate-0 scale-100'}`}>
+                   <div className="w-6 h-6 bg-violet-600 rounded-md flex items-center justify-center shadow-inner">
+                      <span className="text-white font-bold text-xs">Y</span>
+                   </div>
+                </div>
+                {/* Home Icon State */}
+                <div className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out ${showHomeIcon ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-180 scale-50'}`}>
+                   <Home size={20} className="text-slate-600" />
+                </div>
              </Link>
-             <h1 className="text-lg font-bold text-slate-800 tracking-tight">Profile</h1>
+             
+             <div className="flex flex-col justify-center">
+                <h1 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-none">YOU LEARN</h1>
+                <span className="text-[10px] font-bold text-violet-600 flex items-center gap-1 mt-0.5">
+                  MY SPACE <Sparkles size={10} className="text-amber-400 animate-pulse fill-amber-400"/>
+                </span>
+             </div>
            </div>
            
+           {/* ✅ RIGHT SIDE: Wrench Menu (Existing) */}
            <div className="relative">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
                 className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-all active:scale-95 group"
+                aria-label="Menu"
               >
                 <Wrench size={22} strokeWidth={2} className="group-hover:rotate-45 transition-transform duration-300 ease-out" /> 
               </button>
@@ -139,34 +131,12 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                   <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-60 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50 p-1.5 z-20 animate-in fade-in zoom-in-95 origin-top-right">
                       {isAdmin && (
-                        <button 
-                          onClick={() => router.push("/admin")} 
-                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-indigo-600 rounded-xl transition-colors text-left"
-                        >
-                          <Shield size={16}/> Admin Panel
-                        </button>
+                        <button onClick={() => router.push("/admin")} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-indigo-600 rounded-xl transition-colors text-left"><Shield size={16}/> Admin Panel</button>
                       )}
-                      <button 
-                        onClick={() => router.push("/onboarding")} 
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-violet-600 rounded-xl transition-colors text-left"
-                      >
-                        <Edit size={16}/> Edit Profile
-                      </button>
-                      <button 
-                        onClick={() => router.push("/settings")} 
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-900 rounded-xl transition-colors text-left"
-                      >
-                        <Settings size={16}/> Settings
-                      </button>
+                      <button onClick={() => router.push("/onboarding")} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-violet-600 rounded-xl transition-colors text-left"><Edit size={16}/> Edit Profile</button>
+                      <button onClick={() => router.push("/settings")} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-white hover:text-slate-900 rounded-xl transition-colors text-left"><Settings size={16}/> Settings</button>
                       <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                      
-                      {/* ✅ Updated Log Out Button with Safe Logout */}
-                      <button 
-                        onClick={handleSafeLogout} 
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition-colors text-left"
-                      >
-                        <LogOut size={16}/> Log Out
-                      </button>
+                      <button onClick={handleSafeLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition-colors text-left"><LogOut size={16}/> Log Out</button>
                   </div>
                 </>
               )}
@@ -223,7 +193,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                         </div>
                     </div>
 
-                    {/* ✅ CONTROLS - ALWAYS VISIBLE */}
+                    {/* ✅ CONTROLS SECTION */}
                     <div className="flex items-center gap-3 relative pb-1">
                         
                         {/* Now Playing Badge */}
@@ -241,352 +211,26 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                                   {isLoading ? 'Loading...' : 'Now Playing'}
                                 </span>
-                                <span className="text-xs font-bold text-slate-700 truncate">{safeTrack.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">
+                                  {currentTrack?.name || 'Select Track'}
+                                </span>
                              </div>
                           </div>
                         )}
 
-                        {/* Color Button */}
-                        <div className="relative">
-                            <button 
-                                onClick={() => togglePopup('color')}
-                                className={`p-3 rounded-full border transition-all shadow-md active:scale-95 flex items-center gap-2 ${
-                                  activePopup === 'color' 
-                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-200' 
-                                    : 'bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200'
-                                }`}
-                            >
-                                <Palette size={20} />
-                            </button>
-                            
-                            {activePopup === 'color' && (
-                                <div 
-                                    className="fixed inset-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-3"
-                                    onClick={(e) => { e.stopPropagation(); togglePopup(null); }}
-                                >
-                                    {/* Mobile: Small Popup - No Blur, Background Visible */}
-                                    <div className="sm:hidden absolute inset-0 flex items-end justify-center pb-24 pointer-events-none">
-                                        <div 
-                                          className="w-[90%] max-w-[280px] bg-white/98 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl pointer-events-auto animate-in slide-in-from-bottom-8 fade-in duration-300"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {/* Compact Header */}
-                                            <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
-                                                <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                                    <Palette size={12} className="text-indigo-600" />
-                                                    Theme
-                                                </h3>
-                                                <button 
-                                                    onClick={() => togglePopup(null)}
-                                                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors active:scale-95"
-                                                >
-                                                    <X size={16} strokeWidth={2.5} />
-                                                </button>
-                                            </div>
+                        {/* ✅ THEME CONTROL COMPONENT */}
+                        <ThemeControlSection 
+                          isOpen={activePopup === 'color'} 
+                          onToggle={() => togglePopup('color')}
+                          filters={filters}
+                          updateFilter={updateFilter}
+                        />
 
-                                            {/* Compact Content */}
-                                            <div className="p-3 space-y-3">
-                                                <div>
-                                                    <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                                                      <span className="flex items-center gap-1"><Palette size={8}/> Hue</span>
-                                                      <span className="text-indigo-600">{filters.hue}°</span>
-                                                    </div>
-                                                    <input 
-                                                      type="range" 
-                                                      id="mobile-theme-hue"
-                                                      name="mobile-theme-hue"
-                                                      min="0" 
-                                                      max="360" 
-                                                      value={filters.hue} 
-                                                      onChange={(e) => updateFilter('hue', e.target.value)} 
-                                                      className="w-full h-1.5 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-full cursor-pointer"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                                                      <span className="flex items-center gap-1"><Droplet size={8}/> Sat</span>
-                                                      <span className="text-indigo-600">{filters.saturation}%</span>
-                                                    </div>
-                                                    <input 
-                                                      type="range" 
-                                                      id="mobile-theme-sat"
-                                                      name="mobile-theme-sat"
-                                                      min="0" 
-                                                      max="200" 
-                                                      value={filters.saturation} 
-                                                      onChange={(e) => updateFilter('saturation', e.target.value)} 
-                                                      className="w-full h-1.5 bg-slate-200 rounded-full cursor-pointer accent-indigo-600"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                                                      <span className="flex items-center gap-1"><Sun size={8}/> Bright</span>
-                                                      <span className="text-indigo-600">{filters.brightness}%</span>
-                                                    </div>
-                                                    <input 
-                                                      type="range" 
-                                                      id="mobile-theme-bright"
-                                                      name="mobile-theme-bright"
-                                                      min="50" 
-                                                      max="150" 
-                                                      value={filters.brightness} 
-                                                      onChange={(e) => updateFilter('brightness', e.target.value)} 
-                                                      className="w-full h-1.5 bg-slate-200 rounded-full cursor-pointer accent-indigo-600"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Compact Footer */}
-                                            <div className="px-3 py-2 border-t border-slate-100">
-                                                <span className="text-[9px] text-slate-500 flex items-center gap-1 justify-center">
-                                                    <CheckCircle2 size={10} className="text-emerald-500" />
-                                                    Auto-saved
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Desktop Popup */}
-                                    <div 
-                                        className="hidden sm:block absolute bottom-full right-0 mb-3 w-64 bg-white/98 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-200 origin-bottom-right"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                                <Palette size={14} className="text-indigo-600" />
-                                                Theme Colors
-                                            </h3>
-                                            <button 
-                                                onClick={() => togglePopup(null)}
-                                                className="text-slate-400 hover:text-slate-600 transition-colors active:scale-95"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="p-4 space-y-4">
-                                            <div>
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                                  <span className="flex items-center gap-1"><Palette size={10}/> Hue</span>
-                                                  <span className="text-indigo-600">{filters.hue}°</span>
-                                                </div>
-                                                <input 
-                                                  type="range" 
-                                                  id="desktop-theme-hue"
-                                                  name="desktop-theme-hue"
-                                                  min="0" 
-                                                  max="360" 
-                                                  value={filters.hue} 
-                                                  onChange={(e) => updateFilter('hue', e.target.value)} 
-                                                  className="w-full h-1.5 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded-lg cursor-pointer"
-                                                />
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                                  <span className="flex items-center gap-1"><Droplet size={10}/> Sat</span>
-                                                  <span className="text-indigo-600">{filters.saturation}%</span>
-                                                </div>
-                                                <input 
-                                                  type="range" 
-                                                  id="desktop-theme-sat"
-                                                  name="desktop-theme-sat"
-                                                  min="0" 
-                                                  max="200" 
-                                                  value={filters.saturation} 
-                                                  onChange={(e) => updateFilter('saturation', e.target.value)} 
-                                                  className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-indigo-600"
-                                                />
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                                  <span className="flex items-center gap-1"><Sun size={10}/> Bright</span>
-                                                  <span className="text-indigo-600">{filters.brightness}%</span>
-                                                </div>
-                                                <input 
-                                                  type="range" 
-                                                  id="desktop-theme-bright"
-                                                  name="desktop-theme-bright"
-                                                  min="50" 
-                                                  max="150" 
-                                                  value={filters.brightness} 
-                                                  onChange={(e) => updateFilter('brightness', e.target.value)} 
-                                                  className="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer accent-indigo-600"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Footer */}
-                                        <div className="px-4 pb-3 pt-2 border-t border-slate-100">
-                                            <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                                                <CheckCircle2 size={12} className="text-emerald-500" />
-                                                Auto-saving changes
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ✅ MUSIC BUTTON - Production Ready */}
-                        <div className="relative">
-                            <button 
-                                onClick={() => togglePopup('music')} 
-                                className={`p-3 rounded-full border transition-all shadow-md active:scale-95 flex items-center gap-2 ${
-                                  activePopup === 'music' || isPlaying 
-                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-200' 
-                                    : 'bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200'
-                                }`}
-                                disabled={!isInitialized}
-                            >
-                                {isLoading ? (
-                                  <Loader2 size={20} className="animate-spin" />
-                                ) : isPlaying ? (
-                                  <BarChart3 size={20} className="animate-pulse" />
-                                ) : (
-                                  <Music size={20} />
-                                )}
-                            </button>
-
-                            {activePopup === 'music' && (
-                                <div 
-                                    className="fixed inset-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-3"
-                                    onClick={(e) => { e.stopPropagation(); togglePopup(null); }}
-                                >
-                                    <div className={`
-                                        absolute bottom-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-[320px] 
-                                        sm:relative sm:bottom-auto sm:left-auto sm:translate-x-0 sm:w-72 
-                                        bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-2xl shadow-2xl p-4 
-                                        animate-in slide-in-from-bottom-5 fade-in duration-300 origin-bottom
-                                    `}
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {/* Header */}
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex items-center gap-3 overflow-hidden">
-                                                <div 
-                                                  className="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center shrink-0 transition-colors duration-500" 
-                                                  style={{ backgroundColor: safeTrack.color }}
-                                                >
-                                                    {isLoading ? (
-                                                      <Loader2 size={18} className="text-white animate-spin" />
-                                                    ) : isPlaying ? (
-                                                      <div className="flex gap-0.5 h-3 items-end">
-                                                        <div className="w-0.5 h-full bg-white animate-pulse"/>
-                                                        <div className="w-0.5 h-2 bg-white animate-pulse delay-75"/>
-                                                        <div className="w-0.5 h-full bg-white animate-pulse delay-150"/>
-                                                      </div>
-                                                    ) : (
-                                                      <Music size={18} className="text-white" />
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                  <h4 className="text-sm font-bold text-slate-800 truncate">
-                                                    {safeTrack.name}
-                                                  </h4>
-                                                  <p className="text-[10px] text-slate-500 truncate">
-                                                    {safeTrack.artist}
-                                                  </p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                              onClick={() => togglePopup(null)} 
-                                              className="text-slate-400 hover:text-rose-500"
-                                            >
-                                              <X size={16}/>
-                                            </button>
-                                        </div>
-
-                                        {/* Error Display */}
-                                        {error && (
-                                          <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
-                                            <AlertCircle size={14} className="text-rose-500" />
-                                            <span className="text-xs text-rose-600">{error}</span>
-                                          </div>
-                                        )}
-
-                                        {/* Controls */}
-                                        <div className="flex items-center justify-between gap-2 mb-4 px-2">
-                                            <button 
-                                              onClick={previousTrack} 
-                                              className="text-slate-400 hover:text-indigo-600 active:scale-90 transition-transform disabled:opacity-30"
-                                              disabled={isLoading}
-                                            >
-                                              <SkipBack size={20}/>
-                                            </button>
-                                            
-                                            <button 
-                                              onClick={handleMusicToggle}
-                                              disabled={isLoading || !isInitialized}
-                                              className="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isLoading ? (
-                                                  <Loader2 size={20} className="animate-spin" />
-                                                ) : isPlaying ? (
-                                                  <Pause size={20} fill="currentColor"/>
-                                                ) : (
-                                                  <Play size={20} fill="currentColor" className="ml-1"/>
-                                                )}
-                                            </button>
-                                            
-                                            <button 
-                                              onClick={nextTrack} 
-                                              className="text-slate-400 hover:text-indigo-600 active:scale-90 transition-transform disabled:opacity-30"
-                                              disabled={isLoading}
-                                            >
-                                              <SkipForward size={20}/>
-                                            </button>
-                                        </div>
-
-                                        {/* Volume */}
-                                        <div className="flex items-center gap-2 mb-4 px-1">
-                                            <Volume2 size={14} className="text-slate-400"/>
-                                            <input 
-                                              type="range" 
-                                              id="music-volume"
-                                              name="music-volume"
-                                              min="0" 
-                                              max="1" 
-                                              step="0.01" 
-                                              value={volume} 
-                                              onChange={(e) => setVolume(parseFloat(e.target.value))} 
-                                              className="w-full h-1 bg-slate-200 rounded-lg cursor-pointer accent-indigo-600"
-                                            />
-                                            <span className="text-[10px] font-bold text-slate-400 w-8 text-right">
-                                              {Math.round(volume * 100)}%
-                                            </span>
-                                        </div>
-
-                                        {/* Track List */}
-                                        <div className="border-t border-slate-100 pt-2 max-h-32 sm:max-h-40 overflow-y-auto space-y-1 custom-scrollbar">
-                                            {tracks.map(t => (
-                                                <button 
-                                                  key={t.id} 
-                                                  onClick={() => handleTrackChange(t.id)}
-                                                  disabled={isLoading}
-                                                  className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors disabled:opacity-50 ${
-                                                    safeTrack.id === t.id 
-                                                      ? 'bg-indigo-50 text-indigo-700' 
-                                                      : 'hover:bg-slate-50 text-slate-600'
-                                                  }`}
-                                                >
-                                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.color }}></div>
-                                                  <span className="text-xs font-medium truncate flex-1">{t.name}</span>
-                                                  {safeTrack.id === t.id && isPlaying && (
-                                                    <div className="flex gap-0.5 h-2 items-end">
-                                                      <div className="w-0.5 h-full bg-indigo-500 animate-pulse"/>
-                                                      <div className="w-0.5 h-1.5 bg-indigo-500 animate-pulse delay-75"/>
-                                                      <div className="w-0.5 h-full bg-indigo-500 animate-pulse delay-150"/>
-                                                    </div>
-                                                  )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        {/* ✅ MUSIC PLAYER COMPONENT */}
+                        <MusicPlayerSection 
+                          isOpen={activePopup === 'music'} 
+                          onToggle={() => togglePopup('music')}
+                        />
                     </div>
 
                  </div>

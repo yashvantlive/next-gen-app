@@ -96,11 +96,13 @@ export default function EditExamModal({ isOpen, onClose, currentGoals, onSave })
         <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-white">
           
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+            <label htmlFor={currentForm.isCustom ? `exam-name-${activeTab}` : `exam-${activeTab}`} className="block text-xs font-bold text-slate-500 uppercase mb-2">
                 {activeTab === 'primary' ? "Main Goal Exam" : "Backup Exam"}
             </label>
             {!currentForm.isCustom ? (
               <select 
+                id={`exam-${activeTab}`}
+                name={`exam-${activeTab}`}
                 value={currentForm.name} 
                 onChange={(e) => e.target.value === "OTHER" ? handleChange(activeTab, 'isCustom', true) : handleChange(activeTab, 'name', e.target.value)}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-slate-400"
@@ -112,6 +114,8 @@ export default function EditExamModal({ isOpen, onClose, currentGoals, onSave })
             ) : (
               <div className="flex gap-2">
                 <input 
+                  id={`exam-name-${activeTab}`}
+                  name={`exam-name-${activeTab}`}
                   type="text" 
                   value={currentForm.name} 
                   onChange={(e) => handleChange(activeTab, 'name', e.target.value)}
@@ -125,8 +129,10 @@ export default function EditExamModal({ isOpen, onClose, currentGoals, onSave })
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Target Year</label>
+            <label htmlFor={`exam-year-${activeTab}`} className="block text-xs font-bold text-slate-500 uppercase mb-2">Target Year</label>
             <select 
+              id={`exam-year-${activeTab}`}
+              name={`exam-year-${activeTab}`}
               value={currentForm.year} 
               onChange={(e) => handleChange(activeTab, 'year', e.target.value)}
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-500"
@@ -136,8 +142,10 @@ export default function EditExamModal({ isOpen, onClose, currentGoals, onSave })
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Strategy / Motivation Notes</label>
+            <label htmlFor={`exam-notes-${activeTab}`} className="block text-xs font-bold text-slate-500 uppercase mb-2">Strategy / Motivation Notes</label>
             <textarea 
+              id={`exam-notes-${activeTab}`}
+              name={`exam-notes-${activeTab}`}
               rows={4}
               value={currentForm.notes} 
               onChange={(e) => handleChange(activeTab, 'notes', e.target.value)}

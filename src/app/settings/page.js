@@ -2,25 +2,30 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  ChevronLeft, Shield, ShieldAlert, FileQuestion, HelpCircle, 
+  ChevronLeft, Shield, ShieldAlert, HelpCircle, 
   Info, CheckCircle2, ExternalLink, Lock, Globe, 
-  LogOut, ChevronRight, Mail, AlertCircle
+  LogOut, ChevronRight, Mail, AlertCircle, Trash2, X, Send
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthGuard } from "../../hooks/useAuthGuard";
-import { doc, getDoc, setDoc } from "firebase/firestore"; 
-import { db } from "../../lib/firebaseClient"; 
-import RequestResourceModal from "../../components/RequestResourceModal"; 
+import { doc, getDoc, deleteDoc } from "firebase/firestore"; 
+import { signOut } from "firebase/auth";
+import { db, auth } from "../../lib/firebaseClient"; 
 
 export default function SettingsPage() {
   const router = useRouter();
   const { authUser } = useAuthGuard();
   
-  // ✅ ONLY Language Setting
+  // ✅ Settings State
   const [language, setLanguage] = useState("English");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  
+  // ✅ Modals State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
+  // ✅ Processing State
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ✅ LOAD SETTINGS
   useEffect(() => {
@@ -41,39 +46,77 @@ export default function SettingsPage() {
     load();
   }, [authUser]);
 
-  // ✅ AUTO-SAVE SETTINGS - Only language
-  useEffect(() => {
-    if (!authUser?.uid || loading) return;
-    
-    const handler = setTimeout(async () => {
-      setSaving(true);
-      try {
-        await setDoc(doc(db, "users", authUser.uid), {
-          settings: { language }
-        }, { merge: true });
-        
-        console.log('✅ Settings saved:', { language });
-      } catch (e) { 
-        console.error('❌ Failed to save settings:', e); 
-      } finally { 
-        setTimeout(() => setSaving(false), 800); 
-      }
-    }, 600);
-    
-    return () => clearTimeout(handler);
-  }, [language, authUser, loading]);
-
-  const handleHelp = () => alert("Help Center: Guides and FAQs will be available soon.");
+  // ✅ DELETE ACCOUNT ACTION
+  const handleDeleteAccount = async () => {
+    if (!authUser?.uid) return;
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "users", authUser.uid));
+      await signOut(auth);
+      router.push("/auth/login");
+    } catch (e) {
+      console.error("Delete account failed:", e);
+      alert("Failed to delete account. Please try again.");
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20 relative">
       
-      {/* Modal Component */}
-      <RequestResourceModal 
-        isOpen={isRequestModalOpen} 
-        onClose={() => setIsRequestModalOpen(false)} 
-        authUser={authUser} 
-      />
+      {/* 1. DELETE CONFIRMATION MODAL */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-600">
+                <ShieldAlert size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Delete Account?</h3>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  This will permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex border-t border-slate-100 divide-x divide-slate-100">
+              <button disabled={isDeleting} onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-4 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button disabled={isDeleting} onClick={handleDeleteAccount} className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors">{isDeleting ? "Deleting..." : "Confirm Delete"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. CONTACT SUPPORT MODAL */}
+      {isContactModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2"><Mail size={18} className="text-blue-600"/> Contact Support</h3>
+                <button onClick={() => setIsContactModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-full"><X size={18} className="text-slate-400"/></button>
+            </div>
+            <div className="p-6 space-y-4">
+               <div className="p-3 bg-blue-50 text-blue-700 rounded-xl text-xs leading-relaxed border border-blue-100">
+                  <strong>Student Guidelines:</strong><br/>
+                  1. Check the FAQs below before contacting.<br/>
+                  2. For bug reports, please include screenshots.<br/>
+                  3. We usually reply within 24-48 hours.
+               </div>
+               <div className="text-center">
+                  <p className="text-xs text-slate-500 mb-1">Official Support Email</p>
+                  <p className="text-lg font-bold text-slate-800 select-all">yashvantislive@gmail.com</p>
+               </div>
+               <a 
+                 href="mailto:yashvantislive@gmail.com" 
+                 className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+               >
+                 <Send size={16} /> Open Mail App
+               </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 h-16 flex items-center px-6 gap-4">
@@ -81,12 +124,6 @@ export default function SettingsPage() {
             <ChevronLeft size={24} />
          </Link>
          <h1 className="text-lg font-bold text-slate-800 tracking-tight">Settings</h1>
-         {saving && (
-           <span className="ml-auto text-xs font-medium text-emerald-600 animate-pulse flex items-center gap-2">
-             <CheckCircle2 size={14} />
-             Saving...
-           </span>
-         )}
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
@@ -95,13 +132,9 @@ export default function SettingsPage() {
         <section>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Account & Security</h3>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
-                
-                {/* Change Password */}
                 <div className="p-5 flex items-center justify-between group hover:bg-slate-50 transition-colors cursor-not-allowed opacity-60">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                            <Lock size={18} />
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><Lock size={18} /></div>
                         <div>
                             <p className="font-bold text-slate-700">Change Password</p>
                             <p className="text-xs text-slate-400">Update your security credentials</p>
@@ -109,13 +142,9 @@ export default function SettingsPage() {
                     </div>
                     <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
-
-                {/* Logout All Devices */}
                 <div className="p-5 flex items-center justify-between group hover:bg-slate-50 transition-colors cursor-not-allowed opacity-60">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                            <LogOut size={18} />
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><LogOut size={18} /></div>
                         <div>
                             <p className="font-bold text-slate-700">Logout All Devices</p>
                             <p className="text-xs text-slate-400">Secure your account instantly</p>
@@ -123,86 +152,74 @@ export default function SettingsPage() {
                     </div>
                     <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
-
             </div>
         </section>
 
         {/* 2. LANGUAGE & REGION */}
         <section>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Language & Region</h3>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        <Globe size={18} />
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><Globe size={18} /></div>
+                        <div>
+                            <label htmlFor="app-language" className="font-bold text-slate-800 cursor-pointer">App Language</label>
+                            <p className="text-xs text-slate-500">Currently only English is supported.</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="font-bold text-slate-800">App Language</p>
-                        <p className="text-xs text-slate-500">More languages coming soon</p>
+                    <div className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
+                        English (Default)
                     </div>
                 </div>
-                <select 
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none cursor-pointer"
-                >
-                    <option value="English">English</option>
-                    <option value="Hindi" disabled>Hindi (Soon)</option>
-                    <option value="Spanish" disabled>Spanish (Soon)</option>
-                </select>
+                <p className="text-[10px] text-center text-slate-400 font-medium">Hindi & Spanish support coming soon.</p>
             </div>
         </section>
 
-        {/* 3. HELP & SUPPORT */}
+        {/* 3. HELP & SUPPORT / BRAND FAQ */}
         <section>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Help & Support</h3>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
                 
-                {/* Request Content (Functional) */}
+                {/* Contact Support Trigger */}
                 <button 
-                    onClick={() => setIsRequestModalOpen(true)} 
+                    onClick={() => setIsContactModalOpen(true)}
                     className="w-full p-5 flex items-center justify-between hover:bg-slate-50 text-left group transition-colors"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-violet-50 text-violet-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <FileQuestion size={18} />
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-800">Request Content</p>
-                            <p className="text-xs text-slate-500">Missing Syllabus, PYQ, or Notes?</p>
-                        </div>
-                    </div>
-                    <ChevronRight size={18} className="text-slate-300" />
-                </button>
-
-                {/* Contact Support */}
-                <button 
-                    onClick={handleHelp}
-                    className="w-full p-5 flex items-center justify-between hover:bg-slate-50 text-left group transition-colors"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Mail size={18} />
-                        </div>
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform"><Mail size={18} /></div>
                         <div>
                             <p className="font-bold text-slate-800">Contact Support</p>
-                            <p className="text-xs text-slate-500">Report bugs or suggest features</p>
+                            <p className="text-xs text-slate-500">Email us for direct assistance</p>
                         </div>
                     </div>
                     <ChevronRight size={18} className="text-slate-300" />
                 </button>
 
-                {/* FAQ */}
-                <div className="p-5 flex items-center justify-between opacity-60 cursor-not-allowed">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                            <HelpCircle size={18} />
+                {/* FAQ Section (Updated: 5 FAQs, No Buttons) */}
+                <div className="p-5 bg-slate-50/50">
+                    <h4 className="text-xs font-bold text-slate-500 mb-3 flex items-center gap-1"><HelpCircle size={12}/> FREQUENTLY ASKED QUESTIONS</h4>
+                    <div className="space-y-3">
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <p className="text-xs font-bold text-slate-800 mb-1">What is You Learn?</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">You Learn is a student-first productivity platform designed to help you organize syllabus tracking, manage tasks, and stay focused with a personalized mood-based interface.</p>
                         </div>
-                        <div>
-                            <p className="font-bold text-slate-700">FAQ & Guides</p>
-                            <p className="text-xs text-slate-400">Common questions answered</p>
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <p className="text-xs font-bold text-slate-800 mb-1">Is this platform free?</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Yes! You Learn is currently in Public Beta and completely free for all students. No hidden charges.</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <p className="text-xs font-bold text-slate-800 mb-1">How do I track my syllabus?</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Go to the Dashboard and use the 'Academic Radar' to view your progress. You can mark topics as completed in the Tasks view.</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <p className="text-xs font-bold text-slate-800 mb-1">Can I customize the theme?</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Yes! You can change the mood-based theme colors from your Profile page by clicking the Palette icon.</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <p className="text-xs font-bold text-slate-800 mb-1">Is my data secure?</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">Absolutely. We use secure cloud storage for your data. You also have full control to delete your account anytime from the Danger Zone below.</p>
                         </div>
                     </div>
-                    <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
             </div>
         </section>
@@ -211,37 +228,19 @@ export default function SettingsPage() {
         <section>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Legal & Transparency</h3>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-5">
-                
-                {/* Disclaimer */}
                 <div className="flex items-start gap-4">
                     <div className="p-2 bg-slate-100 rounded-lg text-slate-500 shrink-0"><AlertCircle size={18} /></div>
                     <div>
                         <h4 className="text-sm font-bold text-slate-800">Disclaimer</h4>
                         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            You Learn is an educational platform. We do not claim ownership of third-party assets (music/icons). This app adheres to all standard copyright policies.
+                            You Learn is an educational platform. We do not claim ownership of third-party assets.
                         </p>
                     </div>
                 </div>
-
                 <div className="h-px bg-slate-100 w-full"></div>
-
-                {/* Credits */}
-                <div className="flex items-start gap-4">
-                    <div className="p-2 bg-slate-100 rounded-lg text-slate-500 shrink-0"><Info size={18} /></div>
-                    <div>
-                        <h4 className="text-sm font-bold text-slate-800">Credits & Attribution</h4>
-                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Background music tracks are sourced from <a href="https://pixabay.com/music/" target="_blank" rel="noreferrer" className="text-violet-600 hover:underline inline-flex items-center gap-0.5">Pixabay <ExternalLink size={10}/></a> under the Pixabay Content License. 
-                        </p>
-                    </div>
-                </div>
-
-                <div className="h-px bg-slate-100 w-full"></div>
-
-                {/* Links */}
                 <div className="flex gap-4 pt-1">
-                    <button className="text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline">Privacy Policy</button>
-                    <button className="text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline">Terms of Service</button>
+                    <Link href="/privacy" className="text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline">Privacy Policy</Link>
+                    <Link href="/terms" className="text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline">Terms of Service</Link>
                 </div>
             </div>
         </section>
@@ -271,8 +270,11 @@ export default function SettingsPage() {
                         <p className="text-xs text-slate-500">Permanently remove all data.</p>
                     </div>
                 </div>
-                <button className="px-4 py-2 bg-white border border-rose-200 text-rose-600 text-xs font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm">
-                    Delete
+                <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="px-4 py-2 bg-white border border-rose-200 text-rose-600 text-xs font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                >
+                    <Trash2 size={14} /> Delete
                 </button>
             </div>
         </section>

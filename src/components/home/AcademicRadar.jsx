@@ -20,7 +20,8 @@ export default function AcademicRadar({ progress, percent, theme }) {
             className={`h-full bg-gradient-to-r ${theme.progress_bar} rounded-full transition-all duration-1000 ease-out relative`} 
             style={{ width: `${percent}%` }}
           >
-            <div className="absolute top-0 right-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-20"></div>
+            {/* ✅ FIXED: Replaced external image with CSS gradient stripes */}
+            <div className="absolute top-0 right-0 h-full w-full bg-[linear-gradient(135deg,#ffffff20_25%,transparent_25%,transparent_50%,#ffffff20_50%,#ffffff20_75%,transparent_75%,transparent)] bg-[length:10px_10px] opacity-100"></div>
           </div>
         </div>
         <div className={`absolute bottom-0 w-full flex justify-between text-[9px] font-bold uppercase tracking-widest mt-2 ${theme.text_sub}`}>

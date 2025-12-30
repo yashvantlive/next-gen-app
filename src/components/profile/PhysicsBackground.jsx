@@ -21,7 +21,7 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
 
   const state = useRef({
     x: Math.random() * 300, y: Math.random() * 150,
-    // ⚡ 3x Speed applied here (was 5.0, now 15.0)
+    // ⚡ 3x Speed applied
     vx: (Math.random() - 0.5) * 15.0, vy: (Math.random() - 0.5) * 15.0, 
     rotation: Math.random() * 360, vRotation: (Math.random() - 0.5) * 6.0, scale: 1
   });
@@ -36,7 +36,7 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
       // Update global position for Particle interaction
       trackPosition(id, s.x, s.y, iconSize, s.vx, s.vy); 
 
-      // 1. ICON vs ICON COLLISION (Billiards)
+      // 1. ICON vs ICON COLLISION
       Object.entries(iconPositions.current).forEach(([otherId, other]) => {
         if (otherId === id) return; 
         const dx = other.x - s.x; const dy = other.y - s.y;
@@ -59,12 +59,12 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
           s.vx = vx1Final * cos - vy1 * sin;
           s.vy = vy1 * cos + vx1Final * sin;
 
-          // Push apart to prevent sticking
+          // Push apart
           const overlap = minDist - dist;
           s.x -= Math.cos(angle) * overlap * 0.5;
           s.y -= Math.sin(angle) * overlap * 0.5;
           
-          s.vx *= 1.02; s.vy *= 1.02; // Energy retention
+          s.vx *= 1.02; s.vy *= 1.02; 
         }
       });
 
@@ -79,14 +79,14 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
             const force = (interactionRadius - dist) / interactionRadius; 
             s.vx += (dx / dist) * force * 1.5; s.vy += (dy / dist) * force * 1.5;
             
-            const maxSpeed = 20; // Increased max speed limit
+            const maxSpeed = 20; 
             s.vx = Math.max(Math.min(s.vx, maxSpeed), -maxSpeed);
             s.vy = Math.max(Math.min(s.vy, maxSpeed), -maxSpeed);
             s.scale = 1 + (force * 0.3); 
           }
       } 
       
-      // Friction (Keep high speed)
+      // Friction
       if (Math.abs(s.vx) > 10) s.vx *= 0.99; 
       if (Math.abs(s.vy) > 10) s.vy *= 0.99;
       s.scale += (1 - s.scale) * 0.1;
@@ -124,11 +124,10 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
   );
 };
 
-// --- ✨ PARTICLE CANVAS (150 Globules, 2x Speed, 3px-7px Size) ---
+// --- ✨ PARTICLE CANVAS (150 Globules, Mixed Colors) ---
 const ParticleCanvas = ({ theme, iconPositions }) => {
   const canvasRef = useRef(null);
   
-  // ✅ FIX: Access 'particle' safely, never use 'colors'
   const particleColor = theme?.particle || "255, 255, 255";
 
   useEffect(() => {
@@ -137,19 +136,17 @@ const ParticleCanvas = ({ theme, iconPositions }) => {
     const updateSize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     updateSize(); window.addEventListener('resize', updateSize);
     
-    // ✅ Updated: 150 Count, Mixed Colors, 2x Speed
+    // ✅ 150 Particles with Mixed Colors (White/Black/Theme)
     const particles = Array.from({ length: 150 }, () => {
       const variant = Math.random();
       let pColor;
       if (variant > 0.8) pColor = "255, 255, 255"; // White
       else if (variant > 0.6) pColor = "0, 0, 0";   // Black
-      else pColor = particleColor;                 // Theme (Safe)
+      else pColor = particleColor;                 // Theme Color
 
       return {
         x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-        // ⚡ 2x Speed (was 3, now 6)
         vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
-        // 📏 Size: 3px to 7px
         radius: Math.random() * 4 + 3, 
         alpha: Math.random() * 0.5 + 0.2,
         color: pColor 
@@ -160,78 +157,54 @@ const ParticleCanvas = ({ theme, iconPositions }) => {
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Update & Draw Particles
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx; p.y += p.vy;
 
-        // Wall Bounce
         if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
-        // ✅ 1. Particle vs Particle Collision (Billiards Logic)
+        // Particle vs Particle Collision
         for (let j = i + 1; j < particles.length; j++) {
             const p2 = particles[j];
-            const dx = p2.x - p.x;
-            const dy = p2.y - p.y;
+            const dx = p2.x - p.x; const dy = p2.y - p.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             const minDist = p.radius + p2.radius;
 
             if (dist < minDist) {
-                // Elastic Collision Math
                 const angle = Math.atan2(dy, dx);
                 const sin = Math.sin(angle), cos = Math.cos(angle);
                 
-                // Rotate
                 const vx1 = p.vx * cos + p.vy * sin;
                 const vy1 = p.vy * cos - p.vx * sin;
                 const vx2 = p2.vx * cos + p2.vy * sin;
                 const vy2 = p2.vy * cos - p2.vx * sin;
 
-                // Swap
-                const vx1Final = vx2;
-                const vx2Final = vx1;
+                p.vx = vx2 * cos - vy1 * sin; p.vy = vy1 * cos + vx2 * sin;
+                p2.vx = vx1 * cos - vy2 * sin; p2.vy = vy2 * cos + vx1 * sin;
 
-                // Rotate Back
-                p.vx = vx1Final * cos - vy1 * sin;
-                p.vy = vy1 * cos + vx1Final * sin;
-                p2.vx = vx2Final * cos - vy2 * sin;
-                p2.vy = vy2 * cos + vx2Final * sin;
-
-                // Push apart
                 const overlap = minDist - dist;
-                const shiftX = Math.cos(angle) * overlap * 0.5;
-                const shiftY = Math.sin(angle) * overlap * 0.5;
-                p.x -= shiftX; p.y -= shiftY;
-                p2.x += shiftX; p2.y += shiftY;
+                p.x -= Math.cos(angle) * overlap * 0.5; p.y -= Math.sin(angle) * overlap * 0.5;
+                p2.x += Math.cos(angle) * overlap * 0.5; p2.y += Math.sin(angle) * overlap * 0.5;
             }
         }
 
-        // ✅ 2. Particle vs Icon Collision
+        // Particle vs Icon Collision
         if (iconPositions && iconPositions.current) {
             Object.values(iconPositions.current).forEach(icon => {
-                // Icon center
                 const iconCx = icon.x + (icon.size / 2);
                 const iconCy = icon.y + (icon.size / 2);
                 const iconR = icon.size / 2;
-
-                const dx = p.x - iconCx;
-                const dy = p.y - iconCy;
+                const dx = p.x - iconCx; const dy = p.y - iconCy;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 const minDist = p.radius + iconR;
 
                 if (dist < minDist) {
-                    // Bounce particle off icon
                     const angle = Math.atan2(dy, dx);
-                    
-                    // Simple reflection with momentum transfer
-                    p.vx = Math.cos(angle) * 6 + (icon.vx * 0.3); // Higher bounce speed
+                    p.vx = Math.cos(angle) * 6 + (icon.vx * 0.3); 
                     p.vy = Math.sin(angle) * 6 + (icon.vy * 0.3);
-                    
-                    // Push out
                     const overlap = minDist - dist;
-                    p.x += Math.cos(angle) * overlap;
-                    p.y += Math.sin(angle) * overlap;
+                    p.x += Math.cos(angle) * overlap; p.y += Math.sin(angle) * overlap;
                 }
             });
         }
@@ -265,8 +238,6 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
   };
   const handlePointerLeave = () => { pointerRef.current = { x: -1000, y: -1000 }; };
 
-  // 🛡️ CRITICAL FIX: SAFETY CHECK FOR THEME
-  // If theme is undefined (loading), provide a fallback object so app doesn't crash
   const safeTheme = theme || {
     gradient: "from-slate-900 to-slate-800",
     particle: "255, 255, 255",
@@ -280,14 +251,20 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
       onMouseLeave={handlePointerLeave}
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerLeave}
-      // ✅ Use safeTheme here (this is where 'colors' crash was likely happening in old code)
       className={`h-64 sm:h-72 lg:h-80 w-full bg-gradient-to-r ${safeTheme.gradient} relative overflow-hidden rounded-t-[2.5rem] cursor-crosshair touch-none select-none transition-all duration-300`}
       style={{ filter: `hue-rotate(${filters.hue}deg) saturate(${filters.saturation}%) brightness(${filters.brightness}%)` }} 
     >
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-soft-light"></div>
+        {/* ✅ INDUSTRY STANDARD FIX: Base64 Noise (No External Image, No CORB) */}
+        <div 
+          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none" 
+          style={{ 
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")`,
+            backgroundSize: '100px 100px'
+          }}
+        ></div>
+
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
-        {/* ✅ Pass safeTheme to child components */}
         <ParticleCanvas theme={safeTheme} iconPositions={iconPositions} />
         
         {safeTheme.icons && safeTheme.icons.map((Icon, idx) => (

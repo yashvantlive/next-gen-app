@@ -76,8 +76,10 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                 {/* Project Header */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-10">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Project Title</label>
+                    <label htmlFor={`project-title-${proj.id}`} className="block text-xs font-bold text-gray-500 uppercase mb-1">Project Title</label>
                     <input
+                      id={`project-title-${proj.id}`}
+                      name={`project-title-${proj.id}`}
                       type="text"
                       value={proj.title}
                       onChange={(e) => handleChange(proj.id, 'title', e.target.value)}
@@ -86,8 +88,10 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Link / GitHub</label>
+                    <label htmlFor={`project-link-${proj.id}`} className="block text-xs font-bold text-gray-500 uppercase mb-1">Link / GitHub</label>
                     <input
+                      id={`project-link-${proj.id}`}
+                      name={`project-link-${proj.id}`}
                       type="text"
                       value={proj.link}
                       onChange={(e) => handleChange(proj.id, 'link', e.target.value)}
@@ -96,8 +100,10 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tech Stack</label>
+                    <label htmlFor={`project-tech-${proj.id}`} className="block text-xs font-bold text-gray-500 uppercase mb-1">Tech Stack</label>
                     <input
+                      id={`project-tech-${proj.id}`}
+                      name={`project-tech-${proj.id}`}
                       type="text"
                       value={proj.techStack ? proj.techStack.join(', ') : ''}
                       onChange={(e) => handleTechStack(proj.id, e.target.value)}
@@ -110,7 +116,7 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                 {/* Bullet Points (Single Column) */}
                 <div className="mt-4">
                     <div className="flex justify-between items-end mb-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</label>
+                        <label htmlFor={points.length ? `project-point-${proj.id}-${points[0].id}` : undefined} className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</label>
                         <button 
                             onClick={() => addPoint(proj.id)}
                             className="text-xs flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
@@ -129,6 +135,8 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                         {points.map((pt) => (
                             <div key={pt.id} className="relative group/point">
                                 <textarea
+                                    id={`project-point-${proj.id}-${pt.id}`}
+                                    name={`project-point-${proj.id}-${pt.id}`}
                                     placeholder="• Describe a key feature or result..."
                                     value={pt.text || ''}
                                     onChange={(e) => updatePoint(proj.id, pt.id, e.target.value)}

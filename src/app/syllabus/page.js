@@ -388,16 +388,16 @@ function SyllabusContent() {
                         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                             {/* Video Inputs */}
                             <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Youtube size={14} className="text-rose-500"/> YouTube Links</label>
+                                <label htmlFor="video-url-0" className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><Youtube size={14} className="text-rose-500"/> YouTube Links</label>
                                 {videoInputs.map((val, i) => (
-                                    <input key={i} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none" placeholder={`Video URL ${i+1}`} value={val} onChange={e => { const n = [...videoInputs]; n[i] = e.target.value; setVideoInputs(n); }}/>
+                                    <input key={i} id={`video-url-${i}`} name={`video-url-${i}`} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none" placeholder={`Video URL ${i+1}`} value={val} onChange={e => { const n = [...videoInputs]; n[i] = e.target.value; setVideoInputs(n); }}/>
                                 ))}
                             </div>
                             {/* PDF Inputs */}
                             <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><FileText size={14} className="text-orange-500"/> PDF Links</label>
+                                <label htmlFor="pdf-url-0" className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider"><FileText size={14} className="text-orange-500"/> PDF Links</label>
                                 {pdfInputs.map((val, i) => (
-                                    <input key={i} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none" placeholder={`PDF URL ${i+1}`} value={val} onChange={e => { const n = [...pdfInputs]; n[i] = e.target.value; setPdfInputs(n); }}/>
+                                    <input key={i} id={`pdf-url-${i}`} name={`pdf-url-${i}`} className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 outline-none" placeholder={`PDF URL ${i+1}`} value={val} onChange={e => { const n = [...pdfInputs]; n[i] = e.target.value; setPdfInputs(n); }}/>
                                 ))}
                             </div>
                         </div>
@@ -496,9 +496,9 @@ function SyllabusContent() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-end">
                         {/* University */}
                         <div>
-                            <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">University</label>
+                            <label htmlFor="syllabus-university-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">University</label>
                             <div className="relative">
-                                <select 
+                                <select id="syllabus-university-select" name="syllabus-university-select"
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer truncate" 
                                     value={publicFilters.universityId} 
                                     onChange={e => handleFilterChange("universityId", e.target.value)}
@@ -518,9 +518,9 @@ function SyllabusContent() {
 
                         {/* Branch */}
                         <div>
-                            <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Branch</label>
+                            <label htmlFor="syllabus-branch-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Branch</label>
                             <div className="relative">
-                                <select 
+                                <select id="syllabus-branch-select" name="syllabus-branch-select"
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer truncate" 
                                     value={publicFilters.branchId} 
                                     onChange={e => handleFilterChange("branchId", e.target.value)}
@@ -540,9 +540,9 @@ function SyllabusContent() {
 
                         {/* Semester */}
                         <div>
-                            <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Semester</label>
+                            <label htmlFor="syllabus-semester-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Semester</label>
                             <div className="relative">
-                                <select 
+                                <select id="syllabus-semester-select" name="syllabus-semester-select"
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer" 
                                     value={publicFilters.semester} 
                                     onChange={e => handleFilterChange("semester", e.target.value)}
@@ -703,7 +703,7 @@ function SyllabusContent() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Write a Review</h3>
                 <div className="space-y-4">
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Rating</label>
+                      <label htmlFor="syllabus-review-message" className="text-xs font-bold text-slate-500 uppercase">Rating</label>
                       <div className="flex gap-2 mt-1">
                          {[1,2,3,4,5].map(r => (
                             <button key={r} onClick={()=>setReviewForm({...reviewForm, rating: r})} className={`p-1 ${reviewForm.rating >= r ? 'text-amber-400' : 'text-slate-300'}`}><Star fill="currentColor" size={24}/></button>
@@ -711,8 +711,8 @@ function SyllabusContent() {
                       </div>
                    </div>
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
-                      <textarea className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
+                      <label htmlFor="syllabus-review-message" className="text-xs font-bold text-slate-500 uppercase">Message</label>
+                      <textarea id="syllabus-review-message" name="syllabus-review-message" className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
                    </div>
                    <button onClick={handleReviewSubmit} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800">Submit Review</button>
                 </div>

@@ -1,14 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
 import { X, Download } from "lucide-react";
+import { usePathname } from "next/navigation"; // ✅ Import usePathname
 
 export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  
+  // ✅ Get current route
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsMounted(true);
+
+    // ✅ STRICT CHECK: Only allow on '/home' page
+    // If user is on login, onboarding, or profile, do NOT show.
+    if (pathname !== "/home") return;
 
     // Check if already installed
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
@@ -28,7 +36,7 @@ export default function InstallPWA() {
     window.addEventListener("beforeinstallprompt", handler);
 
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [pathname]); // ✅ Run effect when path changes to ensure strict check
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -39,6 +47,8 @@ export default function InstallPWA() {
     if (outcome === "accepted") {
       setDeferredPrompt(null);
       setShowPopup(false);
+      // Optional: Mark as seen so it doesn't show again even if they uninstall later without clearing cache
+      localStorage.setItem("pwa-popup-seen", "true"); 
     }
   };
 
@@ -52,7 +62,7 @@ export default function InstallPWA() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none p-4 pb-20 sm:pb-4">
-      {/* Backdrop (Optional: remove 'bg-black/20' if you want it completely transparent) */}
+      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity" 
         onClick={handleDismiss} 

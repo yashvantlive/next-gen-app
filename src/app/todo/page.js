@@ -658,7 +658,7 @@ export default function TodoPage() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Write a Review</h3>
                 <div className="space-y-4">
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Rating</label>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Rating</div>
                       <div className="flex gap-2 mt-1">
                          {[1,2,3,4,5].map(r => (
                             <button key={r} onClick={()=>setReviewForm({...reviewForm, rating: r})} className={`p-1 ${reviewForm.rating >= r ? 'text-amber-400' : 'text-slate-300'}`}><Star fill="currentColor" size={24}/></button>
@@ -666,8 +666,8 @@ export default function TodoPage() {
                       </div>
                    </div>
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
-                      <textarea className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
+                      <label htmlFor="todo-review-message" className="text-xs font-bold text-slate-500 uppercase">Message</label>
+                      <textarea id="todo-review-message" name="todo-review-message" className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
                    </div>
                    <button onClick={handleReviewSubmit} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800">Submit Review</button>
                 </div>
@@ -737,16 +737,16 @@ export default function TodoPage() {
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Task Title</label>
-                  <input autoFocus className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none font-medium text-slate-900" placeholder="What needs to be done?" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+                  <label htmlFor="task-title" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Task Title</label>
+                  <input id="task-title" name="task-title" autoFocus className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none font-medium text-slate-900" placeholder="What needs to be done?" value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Time (Optional)</label>
-                  <input type="time" className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={newTask.time} onChange={e => setNewTask({...newTask, time: e.target.value})} />
+                  <label htmlFor="task-time" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Time (Optional)</label>
+                  <input id="task-time" name="task-time" type="time" className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={newTask.time} onChange={e => setNewTask({...newTask, time: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Priority</label>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Priority</div>
                   <div className="flex gap-1">
                     {['low', 'high'].map(p => (
                       <button key={p} onClick={() => setNewTask({...newTask, priority: p})} className={`flex-1 py-2.5 rounded-lg text-xs font-bold capitalize transition-all ${newTask.priority === p ? (p==='high'?'bg-rose-600 text-white':'bg-slate-800 text-white') : 'bg-slate-100 text-slate-500'}`}>{p}</button>
@@ -756,9 +756,9 @@ export default function TodoPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
+                  <label htmlFor="task-category" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
                   <div className="relative">
-                    <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium appearance-none" value={newTask.aspect} onChange={e => setNewTask({...newTask, aspect: e.target.value})}>
+                    <select id="task-category" name="task-category" className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium appearance-none" value={newTask.aspect} onChange={e => setNewTask({...newTask, aspect: e.target.value})}>
                       <option value="academics">Academics</option>
                       <option value="internship">Internship</option>
                       <option value="life">Life</option>
@@ -767,8 +767,8 @@ export default function TodoPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Effort</label>
-                  <select className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={newTask.effort} onChange={e => setNewTask({...newTask, effort: e.target.value})}>
+                  <label htmlFor="task-effort" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Effort</label>
+                  <select id="task-effort" name="task-effort" className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium" value={newTask.effort} onChange={e => setNewTask({...newTask, effort: e.target.value})}>
                     <option value="15">15 min</option>
                     <option value="30">30 min</option>
                     <option value="60">1 Hour</option>

@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 import { onAuthChange } from "../lib/firebaseClient"; // Firebase listener check path
 import { 
   Check, 
@@ -64,9 +65,11 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900">
       
       {/* Inject JSON-LD */}
-      <script
+      <Script
+        id="ld-json"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        strategy="afterInteractive"
       />
 
       {/* --- NAVIGATION --- */}

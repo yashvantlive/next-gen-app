@@ -24,6 +24,8 @@ export default function StickyBrain({ theme }) {
       
       <div className="px-4 pb-4 sm:px-6 sm:pb-6">
         <textarea 
+          id="scratchpad-note"
+          name="scratchpad-note"
           className={`w-full h-40 rounded-xl border p-4 text-sm focus:ring-2 focus:border-transparent outline-none resize-none font-medium leading-relaxed shadow-inner ${theme.card_bg} ${theme.text_main} ${theme.border} focus:ring-${theme.accent_bg}`}
           placeholder="Capture ideas, formulas, or quick thoughts here..."
           value={note}

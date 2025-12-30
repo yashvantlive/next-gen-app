@@ -2,11 +2,12 @@
 
 import React, { Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { ArrowLeft, ShieldCheck, Mail, Lock, Home } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ShieldCheck, Mail, Lock } from "lucide-react";
 
 // --- CLIENT COMPONENT FOR NAVIGATION LOGIC ---
 function PrivacyNavigation() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const fromSource = searchParams.get('from'); 
   const isFromLogin = fromSource === 'login';
@@ -18,7 +19,7 @@ function PrivacyNavigation() {
         {/* LEFT SIDE: Navigation Links */}
         <div className="flex items-center gap-4 sm:gap-6">
             
-            {/* 1. Back to Login (Only visible if came from Login) */}
+            {/* 1. Back to Login (Specific explicit link if 'from=login' exists) */}
             {isFromLogin && (
                 <Link 
                   href="/auth/login" 
@@ -29,15 +30,15 @@ function PrivacyNavigation() {
                 </Link>
             )}
 
-            {/* 2. Back to Home (Always visible) */}
-            <Link 
-              href="/" 
+            {/* 2. Generic Back Button (Goes back to previous history - Settings/Home/etc) */}
+            <button 
+              onClick={() => router.back()} 
               className="flex items-center gap-2 font-medium text-slate-500 hover:text-slate-900 transition-colors"
             >
               <ArrowLeft size={18}/> 
-              <span className="hidden sm:inline">Back to Home</span>
-              <span className="sm:hidden">Home</span>
-            </Link>
+              <span className="hidden sm:inline">Back</span>
+              <span className="sm:hidden">Back</span>
+            </button>
         </div>
 
         {/* RIGHT SIDE: Branding */}

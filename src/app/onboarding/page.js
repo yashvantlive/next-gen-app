@@ -15,14 +15,15 @@ import {
   Zap, 
   Heart,
   ArrowRight,
-  ChevronLeft
+  ChevronLeft,
+  FastForward // ✅ Imported for mobile skip icon
 } from "lucide-react";
 
 export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [existingRole, setExistingRole] = useState("user");
-  const [isEditing, setIsEditing] = useState(false); // NEW: Track if editing
+  const [isEditing, setIsEditing] = useState(false); 
   const hydratedRef = useRef(false);
   
   // Metadata State
@@ -89,7 +90,7 @@ export default function OnboardingPage() {
           // C. Fetch Existing Profile
           const profile = await getUserProfile(u.uid);
           if (profile) {
-            setIsEditing(true); // User exists, so this is Edit Mode
+            setIsEditing(true);
             setForm({
               universityId: profile.universityId || profile.university || "",
               branchId: profile.branchId || profile.branch || "",
@@ -100,7 +101,7 @@ export default function OnboardingPage() {
             setInterests(profile.interests || []);
             setExistingRole(profile.role || "user");
           } else {
-            setIsEditing(false); // New User, Onboarding Mode
+            setIsEditing(false);
           }
         } catch (err) {
           console.error("Init failed:", err);
@@ -144,7 +145,6 @@ export default function OnboardingPage() {
         return;
       }
       
-      // Validation: Only require skills if in Editing Mode
       if (isEditing && skills.length === 0) {
         setError("Please add at least one skill since you are editing.");
         setSaving(false);
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
         branchId: form.branchId,
         year: Number(form.year),
         semester: Number(form.semester),
-        skills: skills, // Save empty array if new user
+        skills: skills,
         interests: interests,
         role: existingRole,
         updatedAt: new Date().toISOString(),
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
       setSuccess("Profile saved successfully!");
       
       setTimeout(() => {
-        router.push("/profile"); // Redirect to Profile to see the "Add Skills" prompts
+        router.push("/profile");
       }, 1000);
 
     } catch (err) {
@@ -204,31 +204,38 @@ export default function OnboardingPage() {
       
       {/* --- NEW HEADER --- */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center">
-            <button 
-                onClick={() => router.push('/home')}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-                <ChevronLeft size={18} />
-                <span className="hidden sm:inline">Back to Home</span>
-                <span className="sm:hidden">Back</span>
-            </button>
+        
+        {/* ✅ LEFT: Updated Branding (Purple Y + Uppercase Text) */}
+        <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center shadow-sm shadow-violet-200">
+               <span className="text-white font-bold text-lg">Y</span>
+            </div>
+            <span className="font-bold text-slate-900 tracking-tight uppercase">YOU LEARN</span>
         </div>
+
+        {/* ✅ RIGHT: Skip & Save Buttons (Responsive Skip) */}
         <div className="flex items-center gap-3">
+            {/* Skip Button - Responsive Icon/Text */}
             <button 
                 type="button"
                 onClick={() => router.push('/profile')} 
-                className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors rounded-lg hover:bg-slate-100"
+                className="px-2 sm:px-3 py-2 text-sm font-bold text-slate-500 hover:text-violet-600 transition-colors rounded-lg hover:bg-slate-50 flex items-center gap-1"
             >
-                Skip for now
+                {/* Mobile: Icon + Short text */}
+                <FastForward size={16} className="sm:hidden" />
+                <span className="sm:hidden">Skip</span>
+                {/* Desktop: Full text */}
+                <span className="hidden sm:inline">Skip for now</span>
             </button>
+            
             <button 
                 type="submit"
                 form="onboarding-form"
                 disabled={saving}
-                className={`px-5 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all flex items-center gap-2 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-4 sm:px-5 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all flex items-center gap-2 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-                {saving ? "Saving..." : "Save & Continue"}
+                <span className="hidden sm:inline">{saving ? "Saving..." : "Save & Continue"}</span>
+                <span className="sm:hidden">{saving ? "Saving..." : "Save"}</span>
                 {!saving && <ArrowRight size={16} />}
             </button>
         </div>
@@ -258,9 +265,9 @@ export default function OnboardingPage() {
                 
                 <div className="p-6 space-y-6">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-700">University / College</label>
+                        <label htmlFor="onboarding-university-select" className="text-sm font-semibold text-slate-700">University / College</label>
                         <div className="relative">
-                            <select 
+                            <select id="onboarding-university-select" name="onboarding-university-select"
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                             value={form.universityId} 
                             onChange={(e) => updateField("universityId", e.target.value)}
@@ -276,9 +283,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-700">Branch / Course</label>
+                        <label htmlFor="onboarding-branch-select" className="text-sm font-semibold text-slate-700">Branch / Course</label>
                         <div className="relative">
-                            <select 
+                            <select id="onboarding-branch-select" name="onboarding-branch-select"
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                             value={form.branchId} 
                             onChange={(e) => updateField("branchId", e.target.value)}
@@ -295,9 +302,9 @@ export default function OnboardingPage() {
 
                     <div className="grid grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-700">Year</label>
+                            <label htmlFor="onboarding-year-select" className="text-sm font-semibold text-slate-700">Year</label>
                             <div className="relative">
-                                <select 
+                                <select id="onboarding-year-select" name="onboarding-year-select"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                                 value={form.year} 
                                 onChange={(e) => updateField("year", Number(e.target.value))}
@@ -312,9 +319,9 @@ export default function OnboardingPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-700">Semester</label>
+                            <label htmlFor="onboarding-semester-select" className="text-sm font-semibold text-slate-700">Semester</label>
                             <div className="relative">
-                                <select 
+                                <select id="onboarding-semester-select" name="onboarding-semester-select"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                                 value={form.semester} 
                                 onChange={(e) => updateField("semester", Number(e.target.value))}
@@ -341,10 +348,10 @@ export default function OnboardingPage() {
                     <div className="p-6 space-y-8">
                         {/* Skills Section */}
                         <div className="space-y-3">
-                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                            <div className="text-sm font-semibold text-slate-700 flex items-center justify-between">
                                 <span>Your Skills</span>
                                 <span className="text-xs font-normal text-slate-400">{skills.length} selected</span>
-                            </label>
+                            </div>
                             
                             <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
                                 {skills.length === 0 && <span className="text-slate-400 text-sm">Select skills below...</span>}
@@ -387,10 +394,10 @@ export default function OnboardingPage() {
 
                         {/* Interests Section */}
                         <div className="space-y-3">
-                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                            <div className="text-sm font-semibold text-slate-700 flex items-center justify-between">
                                 <span>Your Interests</span>
                                 <span className="text-xs font-normal text-slate-400">{interests.length} selected</span>
-                            </label>
+                            </div>
                             
                             <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
                                 {interests.length === 0 && <span className="text-slate-400 text-sm">Select interests below...</span>}

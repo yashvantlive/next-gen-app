@@ -254,14 +254,14 @@ export default function ExamsPage() {
          {/* Full Selectors */}
          <div className="grid grid-cols-2 gap-3">
             <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Exam</label>
-                <select value={selectedExam} onChange={e => setSelectedExam(e.target.value)} className="w-full p-2 border rounded-lg font-bold bg-slate-50 text-base outline-none">
+                <label htmlFor="exam-select" className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Exam</label>
+                <select id="exam-select" name="exam" value={selectedExam} onChange={e => setSelectedExam(e.target.value)} className="w-full p-2 border rounded-lg font-bold bg-slate-50 text-base outline-none">
                     {EXAMS.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
                 </select>
             </div>
             <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Branch</label>
-                <select value={selectedBranch} onChange={e => setSelectedBranch(e.target.value)} className="w-full p-2 border rounded-lg font-bold bg-slate-50 text-base outline-none">
+                <label htmlFor="branch-select" className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Branch</label>
+                <select id="branch-select" name="branch" value={selectedBranch} onChange={e => setSelectedBranch(e.target.value)} className="w-full p-2 border rounded-lg font-bold bg-slate-50 text-base outline-none">
                     {BRANCHES.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
                 </select>
             </div>
@@ -282,14 +282,14 @@ export default function ExamsPage() {
         </div>
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-bold text-slate-400">TARGET EXAM</label>
-            <select value={selectedExam} onChange={e => setSelectedExam(e.target.value)} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
+            <label htmlFor="target-exam-select" className="text-xs font-bold text-slate-400">TARGET EXAM</label>
+            <select id="target-exam-select" name="target-exam" value={selectedExam} onChange={e => setSelectedExam(e.target.value)} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
               {EXAMS.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-400">SELECT BRANCH</label>
-            <select value={selectedBranch} onChange={e => setSelectedBranch(e.target.value)} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
+            <label htmlFor="target-branch-select" className="text-xs font-bold text-slate-400">SELECT BRANCH</label>
+            <select id="target-branch-select" name="target-branch" value={selectedBranch} onChange={e => setSelectedBranch(e.target.value)} className="w-full p-3 border rounded-xl font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
               {BRANCHES.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
             </select>
           </div>
@@ -333,10 +333,10 @@ export default function ExamsPage() {
                         <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 text-lg"><Wand2 size={20} className="text-violet-600"/> Master Parser</h3>
                         <div className="space-y-4">
                             {/* Updated: text-base to prevent mobile zoom */}
-                            <input type="text" placeholder="Paste PDF Link Here..." className="w-full p-3 rounded-lg border border-slate-300 text-base bg-white font-medium text-slate-900 focus:ring-2 focus:ring-violet-200 outline-none" value={pdfInput} onChange={(e) => handlePdfUpdate(e.target.value)} />
+                            <input id="master-pdf-link" name="master-pdf-link" type="text" placeholder="Paste PDF Link Here..." className="w-full p-3 rounded-lg border border-slate-300 text-base bg-white font-medium text-slate-900 focus:ring-2 focus:ring-violet-200 outline-none" value={pdfInput} onChange={(e) => handlePdfUpdate(e.target.value)} />
                             <div className="relative">
                                 {/* Updated: text-base to prevent mobile zoom */}
-                                <textarea rows={8} placeholder={`Paste Raw Text from PDF here...`} className="w-full p-4 rounded-lg border border-slate-300 text-base font-mono bg-white text-slate-900 outline-none resize-y focus:ring-2 focus:ring-violet-200" value={rawText} onChange={(e) => setRawText(e.target.value)} />
+                                <textarea id="master-raw-text" name="master-raw-text" rows={8} placeholder={`Paste Raw Text from PDF here...`} className="w-full p-4 rounded-lg border border-slate-300 text-base font-mono bg-white text-slate-900 outline-none resize-y focus:ring-2 focus:ring-violet-200" value={rawText} onChange={(e) => setRawText(e.target.value)} />
                                 <div className="absolute bottom-4 right-4">
                                     <button onClick={handleAutoParse} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-black flex items-center gap-2 shadow-lg"><RefreshCcw size={14}/> Update Structure</button>
                                 </div>
@@ -387,9 +387,9 @@ export default function ExamsPage() {
                                                                     {isAdmin ? (
                                                                         <div className="space-y-2">
                                                                             {/* Updated: text-base for zoom prevention */}
-                                                                            <input value={subject.name} onChange={(e) => updateSubjectField(sIdx, 'name', e.target.value)} className="font-bold text-lg bg-transparent border-b border-dashed border-slate-300 w-full focus:border-indigo-500 outline-none text-slate-900" />
+                                                                            <input id={`subject-name-${sIdx}`} name={`subject-name-${sIdx}`} value={subject.name} onChange={(e) => updateSubjectField(sIdx, 'name', e.target.value)} className="font-bold text-lg bg-transparent border-b border-dashed border-slate-300 w-full focus:border-indigo-500 outline-none text-slate-900" />
                                                                             <div className="flex gap-2 items-center">
-                                                                                <input value={subject.section} onChange={(e) => updateSubjectField(sIdx, 'section', e.target.value)} className="text-xs bg-slate-50 p-1 border rounded w-full md:w-48" placeholder="Section Name" />
+                                                                                <input id={`subject-section-${sIdx}`} name={`subject-section-${sIdx}`} value={subject.section} onChange={(e) => updateSubjectField(sIdx, 'section', e.target.value)} className="text-xs bg-slate-50 p-1 border rounded w-full md:w-48" placeholder="Section Name" />
                                                                                 <button onClick={() => deleteSubject(sIdx)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
                                                                             </div>
                                                                         </div>
@@ -411,7 +411,7 @@ export default function ExamsPage() {
                                                             <div>
                                                                 {isAdmin && (
                                                                     <div className="p-3 bg-slate-50 border-b flex gap-2 items-center">
-                                                                        <input id={`input-${sIdx}`} placeholder="Paste Topics (Comma Separated)..." className="flex-1 p-2 text-base border rounded outline-none focus:border-violet-500" onKeyDown={(e) => { if(e.key === 'Enter'){ addTopicsBatch(sIdx, e.target.value); e.target.value = ""; } }} />
+                                                                        <input id={`input-${sIdx}`} name={`topics-input-${sIdx}`} placeholder="Paste Topics (Comma Separated)..." className="flex-1 p-2 text-base border rounded outline-none focus:border-violet-500" onKeyDown={(e) => { if(e.key === 'Enter'){ addTopicsBatch(sIdx, e.target.value); e.target.value = ""; } }} />
                                                                         <button onClick={() => { const el = document.getElementById(`input-${sIdx}`); addTopicsBatch(sIdx, el.value); el.value = ""; }} className="bg-slate-800 text-white px-4 py-2 rounded text-xs font-bold hover:bg-black">Add</button>
                                                                     </div>
                                                                 )}
@@ -464,7 +464,7 @@ export default function ExamsPage() {
                                                                                         </div>
                                                                                         <div className="flex gap-2">
                                                                                             {/* Updated: text-base to prevent mobile zoom */}
-                                                                                            <input id={`url-input-${editKey}`} placeholder="Paste Link..." className="flex-1 p-2 text-base border rounded outline-none focus:border-indigo-500" />
+                                                                                            <input id={`url-input-${editKey}`} name={`url-input-${editKey}`} placeholder="Paste Link..." className="flex-1 p-2 text-base border rounded outline-none focus:border-indigo-500" />
                                                                                             <button onClick={() => { const el = document.getElementById(`url-input-${editKey}`); addResource(sIdx, tIdx, 'yt', el.value); el.value=''; }} className="px-3 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold hover:bg-red-200">+ YT</button>
                                                                                             <button onClick={() => { const el = document.getElementById(`url-input-${editKey}`); addResource(sIdx, tIdx, 'pdf', el.value); el.value=''; }} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold hover:bg-blue-200">+ PDF</button>
                                                                                         </div>

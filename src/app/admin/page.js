@@ -250,24 +250,24 @@ function UploadSection({ metadata }) {
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">University</label>
-                  <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  <label htmlFor="university-select" className="text-xs font-semibold text-slate-500 uppercase">University</label>
+                  <select id="university-select" name="university-select" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                       required value={formData.universityId} onChange={e => setFormData({...formData, universityId: e.target.value})}>
                     <option value="">Choose University...</option>
                     {sortedUnis.map(([key, val]) => <option key={key} value={key}>{val.name}</option>)}
                   </select>
               </div>
               <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Branch</label>
-                  <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  <label htmlFor="branch-select" className="text-xs font-semibold text-slate-500 uppercase">Branch</label>
+                  <select id="branch-select" name="branch-select" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                       required value={formData.branchId} onChange={e => setFormData({...formData, branchId: e.target.value})}>
                     <option value="">Choose Branch...</option>
                     {sortedBranches.map(([key, val]) => <option key={key} value={key}>{val}</option>)}
                   </select>
               </div>
               <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Semester</label>
-                  <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
+                  <label htmlFor="semester-select" className="text-xs font-semibold text-slate-500 uppercase">Semester</label>
+                  <select id="semester-select" name="semester-select" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
                       required value={formData.semester} onChange={e => setFormData({...formData, semester: e.target.value})}>
                      {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>Semester {n}</option>)}
                   </select>
@@ -276,9 +276,9 @@ function UploadSection({ metadata }) {
 
            <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
               <div className="md:col-span-6 space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Subject Name</label>
+                  <label htmlFor={type === "pyq" && fetchedSubjects.length > 0 ? 'subject-select' : 'subject-name'} className="text-xs font-semibold text-slate-500 uppercase">Subject Name</label>
                   {type === "pyq" && fetchedSubjects.length > 0 ? (
-                      <select 
+                      <select id="subject-select" name="subject-select"
                         className="w-full p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
                         value={formData.subjectName} onChange={handleSubjectSelect} required>
                         <option value="">Select a Subject from Syllabus...</option>
@@ -286,42 +286,42 @@ function UploadSection({ metadata }) {
                         <option value="custom">+ Add Manual Subject</option>
                       </select>
                   ) : (
-                    <input type="text" placeholder="e.g. Data Structures" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required 
+                    <input id="subject-name" name="subject-name" type="text" placeholder="e.g. Data Structures" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required 
                     value={formData.subjectName} onChange={e => setFormData({...formData, subjectName: e.target.value})} />
                   )}
               </div>
               
               <div className="md:col-span-3 space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Subject Code</label>
-                  <input type="text" placeholder="e.g. CS-101" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  <label htmlFor="subject-code" className="text-xs font-semibold text-slate-500 uppercase">Subject Code</label>
+                  <input id="subject-code" name="subject-code" type="text" placeholder="e.g. CS-101" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
                     value={formData.subjectCode} onChange={e => setFormData({...formData, subjectCode: e.target.value})} />
               </div>
 
               {type === "syllabus" ? (
                   <div className="md:col-span-3 grid grid-cols-2 gap-2">
                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Type</label>
-                        <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={formData.subjectType} onChange={e => setFormData({...formData, subjectType: e.target.value})}>
+                        <label htmlFor="subject-type" className="text-xs font-semibold text-slate-500 uppercase">Type</label>
+                        <select id="subject-type" name="subject-type" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={formData.subjectType} onChange={e => setFormData({...formData, subjectType: e.target.value})}>
                           <option value="theory">Theory</option>
                           <option value="lab">Lab</option>
                         </select>
                      </div>
                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Credit</label>
-                        <input type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" 
+                        <label htmlFor="subject-credit" className="text-xs font-semibold text-slate-500 uppercase">Credit</label>
+                        <input id="subject-credit" name="subject-credit" type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" 
                           value={formData.credits} onChange={e => setFormData({...formData, credits: e.target.value})} />
                      </div>
                   </div>
               ) : (
                   <div className="md:col-span-3 grid grid-cols-2 gap-2">
                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Year</label>
-                        <input type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" 
+                        <label htmlFor="subject-year" className="text-xs font-semibold text-slate-500 uppercase">Year</label>
+                        <input id="subject-year" name="subject-year" type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" 
                         value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} />
                      </div>
                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 uppercase">Term</label>
-                        <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={formData.term} onChange={e => setFormData({...formData, term: e.target.value})}>
+                        <label htmlFor="subject-term" className="text-xs font-semibold text-slate-500 uppercase">Term</label>
+                        <select id="subject-term" name="subject-term" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={formData.term} onChange={e => setFormData({...formData, term: e.target.value})}>
                           <option value="Mid">Mid-Term</option>
                           <option value="Final">Final</option>
                         </select>
@@ -331,10 +331,10 @@ function UploadSection({ metadata }) {
            </div>
 
            <div className="space-y-1.5">
-               <label className="text-xs font-semibold text-slate-500 uppercase">
+               <label htmlFor="syllabus-content" className="text-xs font-semibold text-slate-500 uppercase">
                    {type === "syllabus" ? "Syllabus Content (Modules/Topics)" : "Questions Text / Links"}
                </label>
-               <textarea 
+               <textarea id="syllabus-content" name="syllabus-content" 
                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm leading-relaxed" 
                  placeholder={type === "syllabus" ? "Module 1: Introduction...\nModule 2: Arrays..." : "Q1. Explain the theory of relativity...\nQ2. Define thermodynamics..."}
                  required
@@ -418,19 +418,19 @@ function ManageSection({ metadata }) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in space-y-6">
        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <select className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.type} onChange={e => setFilter({...filter, type: e.target.value})}>
+          <select id="admin-filter-type" name="admin-filter-type" className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.type} onChange={e => setFilter({...filter, type: e.target.value})}>
             <option value="syllabi">Syllabus</option>
             <option value="pyqs">PYQs</option>
           </select>
-          <select className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.uni} onChange={e => setFilter({...filter, uni: e.target.value})}>
+          <select id="admin-filter-uni" name="admin-filter-uni" className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.uni} onChange={e => setFilter({...filter, uni: e.target.value})}>
              <option value="">Select Uni</option>
              {sortedUnis.map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}
           </select>
-          <select className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.branch} onChange={e => setFilter({...filter, branch: e.target.value})}>
+          <select id="admin-filter-branch" name="admin-filter-branch" className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.branch} onChange={e => setFilter({...filter, branch: e.target.value})}>
              <option value="">Select Branch</option>
              {sortedBranches.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <select className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.sem} onChange={e => setFilter({...filter, sem: e.target.value})}>
+          <select id="admin-filter-sem" name="admin-filter-sem" className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" value={filter.sem} onChange={e => setFilter({...filter, sem: e.target.value})}>
              {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>Sem {n}</option>)}
           </select>
           <button onClick={fetchContent} className="md:col-span-1 col-span-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
@@ -472,17 +472,17 @@ function ManageSection({ metadata }) {
                 <div className="p-6 overflow-y-auto space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">Subject Name</label>
-                            <input className="w-full p-2 border rounded" value={editingItem.subjectName} onChange={e => setEditingItem({...editingItem, subjectName: e.target.value})} />
+                            <label htmlFor={`editing-subject-name-${editingItem.id}`} className="text-xs font-bold text-slate-500">Subject Name</label>
+                            <input id={`editing-subject-name-${editingItem.id}`} name={`editing-subject-name-${editingItem.id}`} className="w-full p-2 border rounded" value={editingItem.subjectName} onChange={e => setEditingItem({...editingItem, subjectName: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500">Subject Code</label>
-                            <input className="w-full p-2 border rounded" value={editingItem.subjectCode} onChange={e => setEditingItem({...editingItem, subjectCode: e.target.value})} />
+                            <label htmlFor={`editing-subject-code-${editingItem.id}`} className="text-xs font-bold text-slate-500">Subject Code</label>
+                            <input id={`editing-subject-code-${editingItem.id}`} name={`editing-subject-code-${editingItem.id}`} className="w-full p-2 border rounded" value={editingItem.subjectCode} onChange={e => setEditingItem({...editingItem, subjectCode: e.target.value})} />
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500">Content</label>
-                        <textarea className="w-full p-2 border rounded font-mono text-sm h-40" 
+                        <label htmlFor={`editing-subject-content-${editingItem.id}`} className="text-xs font-bold text-slate-500">Content</label>
+                        <textarea id={`editing-subject-content-${editingItem.id}`} name={`editing-subject-content-${editingItem.id}`} className="w-full p-2 border rounded font-mono text-sm h-40" 
                            value={filter.type === 'syllabi' ? editingItem.content : editingItem.questions} 
                            onChange={e => filter.type === 'syllabi' ? setEditingItem({...editingItem, content: e.target.value}) : setEditingItem({...editingItem, questions: e.target.value})} 
                         />
@@ -605,13 +605,13 @@ function TestimonialManager() {
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input type="text" placeholder="Student Name" className="p-3 border rounded-lg w-full" value={tData.name} onChange={e => setTData({...tData, name: e.target.value})} />
-                    <input type="text" placeholder="Branch (e.g. CSE)" className="p-3 border rounded-lg w-full" value={tData.branch} onChange={e => setTData({...tData, branch: e.target.value})} />
-                    <input type="text" placeholder="University (e.g. AKU)" className="p-3 border rounded-lg w-full" value={tData.uni} onChange={e => setTData({...tData, uni: e.target.value})} />
+                    <input id="admin-tstudent-name" name="admin-tstudent-name" type="text" placeholder="Student Name" className="p-3 border rounded-lg w-full" value={tData.name} onChange={e => setTData({...tData, name: e.target.value})} />
+                    <input id="admin-tstudent-branch" name="admin-tstudent-branch" type="text" placeholder="Branch (e.g. CSE)" className="p-3 border rounded-lg w-full" value={tData.branch} onChange={e => setTData({...tData, branch: e.target.value})} />
+                    <input id="admin-tstudent-uni" name="admin-tstudent-uni" type="text" placeholder="University (e.g. AKU)" className="p-3 border rounded-lg w-full" value={tData.uni} onChange={e => setTData({...tData, uni: e.target.value})} />
                 </div>
                 
                 <div className="mb-4">
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Rating</label>
+                    <div className="text-xs font-bold text-slate-500 uppercase block mb-2">Rating</div>
                     <div className="flex gap-2">
                         {[1,2,3,4,5].map(s => (
                             <button key={s} onClick={() => setTData({...tData, rating: s})} className={`text-2xl transition-transform hover:scale-110 ${s <= tData.rating ? "text-amber-400" : "text-slate-200"}`}>★</button>
@@ -619,7 +619,7 @@ function TestimonialManager() {
                     </div>
                 </div>
 
-                <textarea placeholder="Review Message..." className="p-3 border rounded-lg w-full h-24 mb-4 resize-none" value={tData.message} onChange={e => setTData({...tData, message: e.target.value})} />
+                <textarea id="admin-testimonial-message" name="admin-testimonial-message" placeholder="Review Message..." className="p-3 border rounded-lg w-full h-24 mb-4 resize-none" value={tData.message} onChange={e => setTData({...tData, message: e.target.value})} />
                 
                 <button onClick={saveTestimonial} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all">Publish Directly</button>
             </div>
@@ -659,14 +659,14 @@ function TestimonialManager() {
                     <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
                         <h3 className="font-bold text-lg mb-4">Edit Review</h3>
                         <div className="space-y-3">
-                            <input className="w-full p-2 border rounded" placeholder="Name" value={editingReview.name} onChange={e => setEditingReview({...editingReview, name: e.target.value})} />
+                            <input id="admin-edit-review-name" name="admin-edit-review-name" className="w-full p-2 border rounded" placeholder="Name" value={editingReview.name} onChange={e => setEditingReview({...editingReview, name: e.target.value})} />
                             
                             <div className="grid grid-cols-2 gap-3">
-                                <input className="w-full p-2 border rounded" placeholder="Branch" value={editingReview.branch} onChange={e => setEditingReview({...editingReview, branch: e.target.value})} />
-                                <input className="w-full p-2 border rounded" placeholder="University" value={editingReview.uni} onChange={e => setEditingReview({...editingReview, uni: e.target.value})} />
+                                <input id="admin-edit-review-branch" name="admin-edit-review-branch" className="w-full p-2 border rounded" placeholder="Branch" value={editingReview.branch} onChange={e => setEditingReview({...editingReview, branch: e.target.value})} />
+                                <input id="admin-edit-review-uni" name="admin-edit-review-uni" className="w-full p-2 border rounded" placeholder="University" value={editingReview.uni} onChange={e => setEditingReview({...editingReview, uni: e.target.value})} />
                             </div>
 
-                            <textarea className="w-full p-2 border rounded h-32" value={editingReview.message} onChange={e => setEditingReview({...editingReview, message: e.target.value})} />
+                            <textarea id="admin-edit-review-message" name="admin-edit-review-message" className="w-full p-2 border rounded h-32" value={editingReview.message} onChange={e => setEditingReview({...editingReview, message: e.target.value})} />
                             
                             <div className="flex gap-2">
                                 <span className="text-sm font-bold">Rating:</span>
@@ -727,7 +727,7 @@ function MetadataSection({ metadata, refresh }) {
              ))}
           </div>
           <p className="text-xs text-slate-500 mb-2">Adding to: <span className="font-bold text-indigo-600 uppercase">{target}</span></p>
-          <textarea className="input-field w-full p-3 bg-slate-50 border border-slate-200 rounded-lg h-40 font-mono text-xs leading-relaxed" 
+          <textarea id="admin-metadata" name="admin-metadata" className="input-field w-full p-3 bg-slate-50 border border-slate-200 rounded-lg h-40 font-mono text-xs leading-relaxed" 
             placeholder={placeholders[target]}
             value={jsonInput} onChange={e => setJsonInput(e.target.value)}></textarea>
           <button onClick={handleUpdate} className="mt-4 w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800">

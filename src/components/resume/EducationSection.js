@@ -28,8 +28,10 @@ export default function EducationSection({ data, onAdd, onUpdate, onDelete }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">College / School Name</label>
+                <label htmlFor={`edu-institution-${edu.id}`} className="block text-xs font-semibold text-gray-500 uppercase mb-1">College / School Name</label>
                 <input
+                  id={`edu-institution-${edu.id}`}
+                  name={`edu-institution-${edu.id}`}
                   type="text"
                   value={edu.institution || ''} 
                   onChange={(e) => handleChange(edu.id, 'institution', e.target.value)}
@@ -38,8 +40,10 @@ export default function EducationSection({ data, onAdd, onUpdate, onDelete }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">University / Board</label>
+                <label htmlFor={`edu-university-${edu.id}`} className="block text-xs font-semibold text-gray-500 uppercase mb-1">University / Board</label>
                 <input
+                  id={`edu-university-${edu.id}`}
+                  name={`edu-university-${edu.id}`}
                   type="text"
                   value={edu.university || ''}
                   onChange={(e) => handleChange(edu.id, 'university', e.target.value)}
@@ -48,8 +52,10 @@ export default function EducationSection({ data, onAdd, onUpdate, onDelete }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Degree / Class</label>
+                <label htmlFor={`edu-degree-${edu.id}`} className="block text-xs font-semibold text-gray-500 uppercase mb-1">Degree / Class</label>
                 <input
+                  id={`edu-degree-${edu.id}`}
+                  name={`edu-degree-${edu.id}`}
                   type="text"
                   value={edu.degree || ''}
                   onChange={(e) => handleChange(edu.id, 'degree', e.target.value)}
@@ -59,18 +65,22 @@ export default function EducationSection({ data, onAdd, onUpdate, onDelete }) {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Passing Year</label>
+                  <label htmlFor={`edu-cgpa-${edu.id}`} className="block text-xs font-semibold text-gray-500 uppercase mb-1">CGPA / Percentage</label>
                   <input
+                    id={`edu-cgpa-${edu.id}`}
+                    name={`edu-cgpa-${edu.id}`}
                     type="text"
-                    value={edu.year || ''}
-                    onChange={(e) => handleChange(edu.id, 'year', e.target.value)}
-                    placeholder="Ex: 2024"
+                    value={edu.cgpa || ''}
+                    onChange={(e) => handleChange(edu.id, 'cgpa', e.target.value)}
+                    placeholder="Ex: 9.5 / 85%"
                     className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">CGPA / Percentage</label>
+                  <label htmlFor={`edu-cgpa-alt-${edu.id}`} className="block text-xs font-semibold text-gray-500 uppercase mb-1">CGPA / Percentage</label>
                   <input
+                    id={`edu-cgpa-alt-${edu.id}`}
+                    name={`edu-cgpa-alt-${edu.id}`}
                     type="text"
                     value={edu.cgpa || ''}
                     onChange={(e) => handleChange(edu.id, 'cgpa', e.target.value)}

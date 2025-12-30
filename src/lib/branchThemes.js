@@ -41,7 +41,8 @@ export const getBranchTheme = (branchCode) => {
     "ECE": { 
       color: "from-emerald-600 to-green-600", 
       icon: <Radio size={120} className="text-white opacity-10" />,
-      pattern: "bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')]"
+      // ✅ FIXED: Replaced external image with CSS gradient stripes
+      pattern: "bg-[linear-gradient(135deg,#ffffff10_25%,transparent_25%,transparent_50%,#ffffff10_50%,#ffffff10_75%,transparent_75%,transparent)] bg-[length:20px_20px]"
     },
 
     // Default Fallback
