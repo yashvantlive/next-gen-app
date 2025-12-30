@@ -27,7 +27,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
     setActivePopup(activePopup === popupName ? null : popupName);
   };
 
-  // ✅ Music Player - Production Ready
+  // ✅ Music Player
   const { 
     isPlaying, 
     togglePlay, 
@@ -46,26 +46,31 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
 
   const theme = getBranchAssets(profile?.branchId);
 
-  // ✅ Handle Music Toggle with User Interaction
-  const handleMusicToggle = async (e) => {
-    e.stopPropagation();
-    
-    if (!isInitialized) {
-      console.warn('Music player not ready');
-      return;
+  // ✅ Handle Safe Logout (Stops Music First)
+  const handleSafeLogout = async () => {
+    try {
+      if (isPlaying) {
+        await togglePlay(); // 🛑 Stop Music immediately
+      }
+    } catch (e) {
+      console.warn("Music stop failed:", e);
     }
+    handleLogout(); // 👋 Then Log Out
+  };
 
+  // ✅ Handle Music Toggle
+  const handleMusicToggle = async (e) => {
+    e?.stopPropagation(); 
+    if (!isInitialized) return;
     await togglePlay();
   };
 
-  // ✅ Handle Track Change with Auto-play
+  // ✅ Handle Track Change
   const handleTrackChange = async (trackId) => {
     changeTrack(trackId);
-    
-    // Auto-play after track change if needed
     if (!isPlaying) {
       setTimeout(async () => {
-        await play();
+        try { await play(); } catch(e) {}
       }, 200);
     }
   };
@@ -106,6 +111,9 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
   const updateFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: Number(value) }));
   };
+
+  // ✅ Safe Defaults for Current Track
+  const safeTrack = currentTrack || { name: 'Select Track', artist: 'Ambient', color: '#6366F1' };
 
   return (
     <>
@@ -151,8 +159,10 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                         <Settings size={16}/> Settings
                       </button>
                       <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                      
+                      {/* ✅ Updated Log Out Button with Safe Logout */}
                       <button 
-                        onClick={handleLogout} 
+                        onClick={handleSafeLogout} 
                         className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition-colors text-left"
                       >
                         <LogOut size={16}/> Log Out
@@ -167,7 +177,6 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white overflow-hidden relative group">
            
-           {/* Physics Background */}
            <PhysicsBackground theme={theme} filters={filters} touchEnabled={true} />
            
            <div className="px-6 sm:px-10 pb-8 bg-white relative rounded-b-[2.5rem]">
@@ -232,7 +241,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                                   {isLoading ? 'Loading...' : 'Now Playing'}
                                 </span>
-                                <span className="text-xs font-bold text-slate-700 truncate">{currentTrack?.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">{safeTrack.name}</span>
                              </div>
                           </div>
                         )}
@@ -251,9 +260,12 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                             </button>
                             
                             {activePopup === 'color' && (
-                                <>
+                                <div 
+                                    className="fixed inset-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-3"
+                                    onClick={(e) => { e.stopPropagation(); togglePopup(null); }}
+                                >
                                     {/* Mobile: Small Popup - No Blur, Background Visible */}
-                                    <div className="sm:hidden fixed inset-0 z-40 flex items-end justify-center pb-24 pointer-events-none">
+                                    <div className="sm:hidden absolute inset-0 flex items-end justify-center pb-24 pointer-events-none">
                                         <div 
                                           className="w-[90%] max-w-[280px] bg-white/98 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl pointer-events-auto animate-in slide-in-from-bottom-8 fade-in duration-300"
                                           onClick={(e) => e.stopPropagation()}
@@ -281,6 +293,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                     </div>
                                                     <input 
                                                       type="range" 
+                                                      id="mobile-theme-hue"
+                                                      name="mobile-theme-hue"
                                                       min="0" 
                                                       max="360" 
                                                       value={filters.hue} 
@@ -295,6 +309,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                     </div>
                                                     <input 
                                                       type="range" 
+                                                      id="mobile-theme-sat"
+                                                      name="mobile-theme-sat"
                                                       min="0" 
                                                       max="200" 
                                                       value={filters.saturation} 
@@ -309,6 +325,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                     </div>
                                                     <input 
                                                       type="range" 
+                                                      id="mobile-theme-bright"
+                                                      name="mobile-theme-bright"
                                                       min="50" 
                                                       max="150" 
                                                       value={filters.brightness} 
@@ -329,7 +347,10 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                     </div>
 
                                     {/* Desktop Popup */}
-                                    <div className="hidden sm:block absolute bottom-full right-0 mb-3 w-64 bg-white/98 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-200 origin-bottom-right">
+                                    <div 
+                                        className="hidden sm:block absolute bottom-full right-0 mb-3 w-64 bg-white/98 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl z-50 animate-in slide-in-from-bottom-5 fade-in duration-200 origin-bottom-right"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         {/* Header */}
                                         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -353,6 +374,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                 </div>
                                                 <input 
                                                   type="range" 
+                                                  id="desktop-theme-hue"
+                                                  name="desktop-theme-hue"
                                                   min="0" 
                                                   max="360" 
                                                   value={filters.hue} 
@@ -367,6 +390,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                 </div>
                                                 <input 
                                                   type="range" 
+                                                  id="desktop-theme-sat"
+                                                  name="desktop-theme-sat"
                                                   min="0" 
                                                   max="200" 
                                                   value={filters.saturation} 
@@ -381,6 +406,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                 </div>
                                                 <input 
                                                   type="range" 
+                                                  id="desktop-theme-bright"
+                                                  name="desktop-theme-bright"
                                                   min="50" 
                                                   max="150" 
                                                   value={filters.brightness} 
@@ -398,7 +425,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                             </span>
                                         </div>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
 
@@ -423,20 +450,24 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                             </button>
 
                             {activePopup === 'music' && (
-                                <>
-                                    <div className="fixed inset-0 z-40 sm:hidden bg-black/10 backdrop-blur-[1px]" onClick={() => togglePopup(null)}></div>
+                                <div 
+                                    className="fixed inset-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:bottom-full sm:mb-3"
+                                    onClick={(e) => { e.stopPropagation(); togglePopup(null); }}
+                                >
                                     <div className={`
-                                        fixed bottom-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-[320px] 
-                                        sm:absolute sm:bottom-full sm:right-0 sm:left-auto sm:translate-x-0 sm:w-72 sm:mb-3 
-                                        bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-2xl shadow-2xl p-4 z-50 
+                                        absolute bottom-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-[320px] 
+                                        sm:relative sm:bottom-auto sm:left-auto sm:translate-x-0 sm:w-72 
+                                        bg-white/95 backdrop-blur-2xl border border-slate-200 rounded-2xl shadow-2xl p-4 
                                         animate-in slide-in-from-bottom-5 fade-in duration-300 origin-bottom
-                                    `}>
+                                    `}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         {/* Header */}
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div 
                                                   className="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center shrink-0 transition-colors duration-500" 
-                                                  style={{ backgroundColor: currentTrack?.color || '#6366F1' }}
+                                                  style={{ backgroundColor: safeTrack.color }}
                                                 >
                                                     {isLoading ? (
                                                       <Loader2 size={18} className="text-white animate-spin" />
@@ -452,10 +483,10 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                 </div>
                                                 <div className="min-w-0">
                                                   <h4 className="text-sm font-bold text-slate-800 truncate">
-                                                    {currentTrack?.name || "Select Track"}
+                                                    {safeTrack.name}
                                                   </h4>
                                                   <p className="text-[10px] text-slate-500 truncate">
-                                                    {currentTrack?.artist || "Ambient"}
+                                                    {safeTrack.artist}
                                                   </p>
                                                 </div>
                                             </div>
@@ -513,6 +544,8 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                             <Volume2 size={14} className="text-slate-400"/>
                                             <input 
                                               type="range" 
+                                              id="music-volume"
+                                              name="music-volume"
                                               min="0" 
                                               max="1" 
                                               step="0.01" 
@@ -533,14 +566,14 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                                   onClick={() => handleTrackChange(t.id)}
                                                   disabled={isLoading}
                                                   className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors disabled:opacity-50 ${
-                                                    currentTrack.id === t.id 
+                                                    safeTrack.id === t.id 
                                                       ? 'bg-indigo-50 text-indigo-700' 
                                                       : 'hover:bg-slate-50 text-slate-600'
                                                   }`}
                                                 >
                                                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.color }}></div>
                                                   <span className="text-xs font-medium truncate flex-1">{t.name}</span>
-                                                  {currentTrack.id === t.id && isPlaying && (
+                                                  {safeTrack.id === t.id && isPlaying && (
                                                     <div className="flex gap-0.5 h-2 items-end">
                                                       <div className="w-0.5 h-full bg-indigo-500 animate-pulse"/>
                                                       <div className="w-0.5 h-1.5 bg-indigo-500 animate-pulse delay-75"/>
@@ -551,7 +584,7 @@ export default function ProfileHeader({ profile, authUser, isAdmin, handleLogout
                                             ))}
                                         </div>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>

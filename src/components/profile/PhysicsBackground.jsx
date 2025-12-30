@@ -128,7 +128,7 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
 const ParticleCanvas = ({ theme, iconPositions }) => {
   const canvasRef = useRef(null);
   
-  // ✅ SAFE FALLBACK FOR PARTICLE COLOR
+  // ✅ FIX: Access 'particle' safely, never use 'colors'
   const particleColor = theme?.particle || "255, 255, 255";
 
   useEffect(() => {
@@ -265,8 +265,8 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
   };
   const handlePointerLeave = () => { pointerRef.current = { x: -1000, y: -1000 }; };
 
-  // 🛡️ CRITICAL FIX: SAFE FALLBACK THEME
-  // Prevents crash when 'theme' is undefined
+  // 🛡️ CRITICAL FIX: SAFETY CHECK FOR THEME
+  // If theme is undefined (loading), provide a fallback object so app doesn't crash
   const safeTheme = theme || {
     gradient: "from-slate-900 to-slate-800",
     particle: "255, 255, 255",
@@ -280,17 +280,16 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
       onMouseLeave={handlePointerLeave}
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerLeave}
-      // ✅ Use safeTheme here
+      // ✅ Use safeTheme here (this is where 'colors' crash was likely happening in old code)
       className={`h-64 sm:h-72 lg:h-80 w-full bg-gradient-to-r ${safeTheme.gradient} relative overflow-hidden rounded-t-[2.5rem] cursor-crosshair touch-none select-none transition-all duration-300`}
       style={{ filter: `hue-rotate(${filters.hue}deg) saturate(${filters.saturation}%) brightness(${filters.brightness}%)` }} 
     >
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-soft-light"></div>
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
-        {/* ✅ Pass safeTheme to ParticleCanvas */}
+        {/* ✅ Pass safeTheme to child components */}
         <ParticleCanvas theme={safeTheme} iconPositions={iconPositions} />
         
-        {/* ✅ Use safeTheme.icons for mapping */}
         {safeTheme.icons && safeTheme.icons.map((Icon, idx) => (
           <PhysicsIcon
             key={idx} id={`icon-${idx}`} Icon={Icon} color={safeTheme.particle}

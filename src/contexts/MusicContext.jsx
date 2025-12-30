@@ -11,7 +11,6 @@ export const useMusicPlayer = () => {
 };
 
 export const MusicProvider = ({ children }) => {
-  // ✅ Audio Instance (Singleton)
   const audioRef = useRef(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
@@ -22,220 +21,185 @@ export const MusicProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Initialize Audio ONCE (Production Ready)
+  // ✅ Initialize Audio ONCE (Production Safe)
   useEffect(() => {
     if (typeof window === "undefined" || audioRef.current) return;
 
     try {
       const audio = new Audio();
-      audio.preload = "metadata"; // Optimize loading
+      // 🚀 Fix 1: 'metadata' prevents aggressive loading errors on first render
+      audio.preload = "metadata"; 
       audio.loop = true;
       audio.volume = volume;
       
-      // ✅ Event Listeners for robust state management
-      audio.addEventListener('canplay', () => {
+      const handleCanPlay = () => {
         setIsLoading(false);
         setError(null);
-      });
-      
-      audio.addEventListener('playing', () => {
+      };
+
+      const handlePlaying = () => {
         setIsPlaying(true);
         setIsLoading(false);
-      });
-      
-      audio.addEventListener('pause', () => {
+      };
+
+      const handlePause = () => {
         setIsPlaying(false);
-      });
-      
-      audio.addEventListener('error', (e) => {
-        console.error('Audio Error:', e);
-        setError('Failed to load track');
+      };
+
+      const handleWaiting = () => {
+        setIsLoading(true);
+      };
+
+      // 🚀 Fix 2: Silent Error Handler (Logs only in Development)
+      const handleError = (e) => {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Music Player Error (Dev Only):", e);
+        }
         setIsLoading(false);
         setIsPlaying(false);
-      });
+        // In production, we fail silently to keep console clean
+      };
 
-      audio.addEventListener('loadstart', () => {
-        setIsLoading(true);
-      });
+      audio.addEventListener('canplay', handleCanPlay);
+      audio.addEventListener('playing', handlePlaying);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('waiting', handleWaiting);
+      audio.addEventListener('error', handleError);
 
       audioRef.current = audio;
       setIsInitialized(true);
-      
-      console.log('🎵 Music Player Initialized');
+
     } catch (err) {
-      console.error('Failed to initialize audio:', err);
-      setError('Audio initialization failed');
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to initialize audio:", err);
+      }
     }
 
-    // Cleanup
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current.load();
+        audioRef.current.src = "";
+        audioRef.current = null;
       }
     };
   }, []);
 
-  // ✅ Handle Track Changes (Production Ready)
-  const loadTrack = useCallback((track) => {
-    const audio = audioRef.current;
-    if (!audio || !track) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    // Check if source needs to change
-    const currentSrcPath = audio.src ? decodeURI(audio.src).split(window.location.origin)[1] : '';
-    const newTrackPath = decodeURI(track.url);
-
-    if (currentSrcPath !== newTrackPath) {
-      audio.src = track.url;
-      audio.load();
-      console.log('🎵 Loading track:', track.name);
+  // ✅ Safe Play Function (Promise Handled)
+  const safePlay = async () => {
+    if (!audioRef.current) return;
+    try {
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        await playPromise.catch((err) => {
+          // 🚀 Fix 3: Catch Autoplay Policy errors silently
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Autoplay prevented (harmless):", err);
+          }
+          setIsPlaying(false);
+        });
+      }
+    } catch (err) {
+      // Ignore sync errors
     }
-  }, []);
+  };
 
-  // ✅ Play/Pause Control (Spotify-level handling)
-  const play = useCallback(async () => {
-    const audio = audioRef.current;
-    if (!audio || !isInitialized) {
-      console.warn('Audio not initialized');
-      return;
-    }
+  // ✅ Load Track Handler
+  const loadTrack = useCallback(async (track) => {
+    if (!audioRef.current) return;
 
     try {
       setIsLoading(true);
+      setError(null);
       
-      // Ensure track is loaded
-      if (!audio.src || audio.src === window.location.href) {
-        loadTrack(currentTrack);
-      }
+      const wasPlaying = isPlaying;
+      
+      audioRef.current.src = track.url;
+      audioRef.current.load();
+      
+      setCurrentTrack(track);
 
-      const playPromise = audio.play();
-      
-      if (playPromise !== undefined) {
-        await playPromise;
-        setIsPlaying(true);
-        setError(null);
-        console.log('▶️ Playing:', currentTrack.name);
+      if (wasPlaying) {
+        await safePlay();
       }
-    } catch (error) {
-      console.error('Play error:', error);
-      
-      // Handle specific browser errors
-      if (error.name === 'NotAllowedError') {
-        setError('Click to enable audio');
-      } else if (error.name === 'NotSupportedError') {
-        setError('Audio format not supported');
-      } else {
-        setError('Playback failed');
-      }
-      
-      setIsPlaying(false);
-    } finally {
+    } catch (err) {
+      // Silent fail in production
       setIsLoading(false);
     }
-  }, [isInitialized, currentTrack, loadTrack]);
+  }, [isPlaying]);
 
-  const pause = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.pause();
-    setIsPlaying(false);
-    console.log('⏸️ Paused');
+  // ✅ Play/Pause Toggle
+  const togglePlay = useCallback(async () => {
+    if (!audioRef.current) return;
+    
+    try {
+      if (audioRef.current.paused) {
+        await safePlay();
+      } else {
+        audioRef.current.pause();
+      }
+    } catch (err) {
+      // Silent safety
+      setIsPlaying(false);
+    }
   }, []);
 
-  // ✅ Toggle Play/Pause
-  const togglePlay = useCallback(async () => {
-    if (isPlaying) {
-      pause();
-    } else {
-      await play();
-    }
-  }, [isPlaying, play, pause]);
+  // ✅ Public Play Method
+  const play = useCallback(async () => {
+    await safePlay();
+  }, []);
 
   // ✅ Change Track
   const changeTrack = useCallback((trackId) => {
     const track = BACKGROUND_TRACKS.find(t => t.id === trackId);
-    if (!track) return;
-
-    const wasPlaying = isPlaying;
-    
-    // Pause current track
-    if (audioRef.current) {
-      audioRef.current.pause();
+    if (track) {
+        loadTrack(track);
     }
+  }, [loadTrack]);
 
-    setCurrentTrack(track);
-    loadTrack(track);
-
-    // Resume if was playing
-    if (wasPlaying) {
-      setTimeout(() => play(), 100);
-    }
-
-    console.log('🔄 Track changed to:', track.name);
-  }, [isPlaying, loadTrack, play]);
-
-  // ✅ Next Track
+  // ✅ Controls
   const nextTrack = useCallback(() => {
     const idx = BACKGROUND_TRACKS.findIndex(t => t.id === currentTrack.id);
     const nextIdx = (idx + 1) % BACKGROUND_TRACKS.length;
     changeTrack(BACKGROUND_TRACKS[nextIdx].id);
   }, [currentTrack, changeTrack]);
 
-  // ✅ Previous Track
   const previousTrack = useCallback(() => {
     const idx = BACKGROUND_TRACKS.findIndex(t => t.id === currentTrack.id);
     const prevIdx = idx === 0 ? BACKGROUND_TRACKS.length - 1 : idx - 1;
     changeTrack(BACKGROUND_TRACKS[prevIdx].id);
   }, [currentTrack, changeTrack]);
 
-  // ✅ Volume Control
+  // ✅ Volume
   const updateVolume = useCallback((newVolume) => {
     const vol = Math.max(0, Math.min(1, parseFloat(newVolume)));
     setVolume(vol);
-    
     if (audioRef.current) {
       audioRef.current.volume = vol;
     }
   }, []);
 
-  // ✅ Load track when currentTrack changes
+  // ✅ Initial Setup (Source only, No Autoplay)
   useEffect(() => {
-    if (isInitialized && currentTrack) {
-      loadTrack(currentTrack);
+    if (isInitialized && currentTrack && audioRef.current && !audioRef.current.src) {
+      audioRef.current.src = currentTrack.url;
     }
-  }, [currentTrack, isInitialized, loadTrack]);
-
-  // ✅ Update volume on audio element
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
+  }, [isInitialized, currentTrack]);
 
   return (
     <MusicContext.Provider value={{
-      // State
       isPlaying,
       currentTrack,
       volume,
-      tracks: BACKGROUND_TRACKS,
       isLoading,
       error,
       isInitialized,
-      
-      // Actions
       togglePlay,
       play,
-      pause,
       changeTrack,
       nextTrack,
       previousTrack,
       setVolume: updateVolume,
+      tracks: BACKGROUND_TRACKS
     }}>
       {children}
     </MusicContext.Provider>

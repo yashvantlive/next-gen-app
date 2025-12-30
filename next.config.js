@@ -4,20 +4,17 @@ const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: false, // ✅ CHANGE: Development me PWA enable karne ke liye ise 'false' kar diya
+  disable: false,
   
-  // Advanced Caching Rules
   runtimeCaching: [
-    // 1. Static Assets -> Cache First
     {
       urlPattern: /^https?.+\.(png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|css|js)$/i,
       handler: "CacheFirst",
       options: {
         cacheName: "static-assets",
-        expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 }, // 30 days
+        expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 },
       },
     },
-    // 2. Public Pages -> Stale While Revalidate
     {
       urlPattern: ({ url }) => {
         const path = url.pathname;
@@ -36,7 +33,6 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
       },
     },
-    // 3. User Data -> Network First
     {
       urlPattern: ({ url }) => {
         const path = url.pathname;
@@ -55,7 +51,6 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 30, maxAgeSeconds: 24 * 60 * 60 },
       },
     },
-    // 4. API & Firebase -> Network Only
     {
       urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
       handler: "NetworkOnly",
@@ -73,7 +68,6 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
   reactStrictMode: true,
-  // ❌ swcMinify: true, // REMOVED: Next.js 16 me ye automatic hota hai, isliye error aa raha tha.
   
   images: {
     remotePatterns: [
@@ -86,6 +80,29 @@ const nextConfig = {
         hostname: "lh3.googleusercontent.com", 
       },
     ],
+  },
+
+  // ✅ FIX: 'unsafe-none' is required for strict Firebase Auth popup flows
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'unsafe-none', // 👈 Changed to unsafe-none (Most permissive)
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'unsafe-none',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          }
+        ],
+      },
+    ];
   },
 };
 
