@@ -1,15 +1,14 @@
 /** @type {import('next').NextConfig} */
 
-// PWA Configuration
 const withPWA = require("next-pwa")({
-  dest: "public", // PWA files public folder me banenge
-  register: true, // Service worker register karega
-  skipWaiting: true, // Naya update aate hi activate karega
-  disable: process.env.NODE_ENV === "development", // Development me PWA disable rahega (caching issues se bachne ke liye)
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: false, // ✅ CHANGE: Development me PWA enable karne ke liye ise 'false' kar diya
   
-  // Advanced Caching Rules (Safe for your App)
+  // Advanced Caching Rules
   runtimeCaching: [
-    // 1. Static Assets (Images, Fonts, Scripts) -> Cache First
+    // 1. Static Assets -> Cache First
     {
       urlPattern: /^https?.+\.(png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|css|js)$/i,
       handler: "CacheFirst",
@@ -18,7 +17,7 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 }, // 30 days
       },
     },
-    // 2. Public Pages (Landing, Syllabus, About) -> Stale While Revalidate
+    // 2. Public Pages -> Stale While Revalidate
     {
       urlPattern: ({ url }) => {
         const path = url.pathname;
@@ -37,7 +36,7 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
       },
     },
-    // 3. User Data (Home, Todo, Resume) -> Network First (Safety)
+    // 3. User Data -> Network First
     {
       urlPattern: ({ url }) => {
         const path = url.pathname;
@@ -45,7 +44,8 @@ const withPWA = require("next-pwa")({
           path.startsWith("/home") ||
           path.startsWith("/todo") ||
           path.startsWith("/resume") ||
-          path.startsWith("/exams")
+          path.startsWith("/exams") ||
+          path.startsWith("/profile")
         );
       },
       handler: "NetworkFirst",
@@ -55,7 +55,7 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 30, maxAgeSeconds: 24 * 60 * 60 },
       },
     },
-    // 4. API & Firestore -> Network Only (Never Cache)
+    // 4. API & Firebase -> Network Only
     {
       urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
       handler: "NetworkOnly",
@@ -64,17 +64,29 @@ const withPWA = require("next-pwa")({
       urlPattern: /^https:\/\/firestore\.googleapis\.com/,
       handler: "NetworkOnly",
     },
+    {
+      urlPattern: /^https:\/\/identitytoolkit\.googleapis\.com/,
+      handler: "NetworkOnly",
+    },
   ],
 });
 
 const nextConfig = {
   reactStrictMode: true,
-  // Agar future me images domains add karne ho to yaha kar sakte hain
-  /* images: {
-    domains: ['firebasestorage.googleapis.com'],
-  }, 
-  */
+  // ❌ swcMinify: true, // REMOVED: Next.js 16 me ye automatic hota hai, isliye error aa raha tha.
+  
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com", 
+      },
+    ],
+  },
 };
 
-// Configuration ko PWA wrapper ke sath export karein
 module.exports = withPWA(nextConfig);
