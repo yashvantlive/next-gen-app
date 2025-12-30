@@ -1,84 +1,96 @@
+"use client";
 import React from 'react';
-import Link from 'next/link';
-import { Quote, Star, Plus, Edit2, ArrowRight } from "lucide-react";
-import { getFullForm } from '../../lib/constants';
+import { Quote, Star, Plus, User, ArrowRight, Edit3 } from 'lucide-react';
 
-export default function CommunityWall({ reviews, theme, onOpenReview, onEditReview, currentUserId }) {
+export default function CommunityWall({ reviews, theme, currentUserId, onOpenReview, onEditReview, onSeeAll }) {
+  
+  // Show only top 2 reviews on the wall to keep it clean
+  const featuredReviews = reviews.slice(0, 2);
+
   return (
-    <section className={`pt-12 border-t ${theme.border}`}>
+    <section className="relative">
       
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 px-2 gap-4">
-         <div className="flex items-center gap-3 opacity-90">
-            <div className={`p-2 rounded-lg ${theme.radar_bg}`}>
-               <Quote size={20} className={theme.radar_color}/>
-            </div>
-            <h3 className={`text-base font-bold uppercase tracking-widest ${theme.text_main}`}>Community Vibes</h3>
-         </div>
-         
-         <div className="flex items-center gap-3">
-            <Link href="/reviews" className={`text-xs font-bold flex items-center gap-1 transition-colors ${theme.text_sub} hover:${theme.text_main}`}>
-                See All Reviews <ArrowRight size={14}/>
-            </Link>
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center gap-3">
+           <Quote size={24} className={`transform scale-x-[-1] ${theme.text_main}`} />
+           <h2 className="text-lg font-bold text-slate-700 tracking-tight">COMMUNITY VIBES</h2>
+        </div>
+        
+        <div className="flex items-center gap-2 sm:gap-4">
+            {/* ✅ UPDATED: Button triggers Modal instead of Page Link */}
+            <button 
+                onClick={onSeeAll}
+                className="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+            >
+                See All Reviews <ArrowRight size={12} />
+            </button>
+
             <button 
                 onClick={onOpenReview}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all hover:shadow-md active:scale-95 ${theme.soft_button} ${theme.border}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-slate-200 transition-transform active:scale-95 ${theme.accent_bg}`}
             >
-                <Plus size={14}/> Write Review
+                <Plus size={14} strokeWidth={3} /> <span className="hidden sm:inline">Write Review</span>
+                <span className="sm:hidden">Write</span>
             </button>
-         </div>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {reviews.length > 0 ? (
-            reviews.slice(0, 3).map((rev, idx) => {
-              const isOwner = currentUserId === rev.userId;
-              return (
-                <div key={rev.id || idx} className={`p-6 rounded-[2rem] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full group relative ${theme.card_bg} ${theme.card_border}`}>
+      {/* Reviews Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {featuredReviews.length > 0 ? featuredReviews.map((review) => {
+            const isOwn = currentUserId && review.userId === currentUserId;
+            
+            return (
+                <div key={review.id} className={`group relative p-6 bg-white rounded-3xl border border-slate-100 shadow-sm transition-all hover:shadow-md hover:border-slate-200 ${theme.card_style}`}>
                     
-                    {isOwner && (
-                      <button onClick={() => onEditReview(rev)} className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${theme.radar_bg} ${theme.text_sub}`}>
-                        <Edit2 size={14}/>
-                      </button>
+                    {/* Edit Button (Only for owner) */}
+                    {isOwn && (
+                        <button 
+                            onClick={() => onEditReview(review)}
+                            className="absolute top-4 right-4 p-2 rounded-full bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                            <Edit3 size={14} />
+                        </button>
                     )}
 
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border ${theme.radar_bg} ${theme.radar_color} ${theme.border}`}>
-                              {rev.name?.[0] || "U"}
-                          </div>
-                          <div className="min-w-0">
-                              <p className={`font-bold text-sm truncate flex items-center gap-2 ${theme.text_main}`}>
-                                {rev.name}
-                              </p>
-                              <p className={`text-[10px] uppercase font-bold tracking-wide truncate ${theme.text_sub}`}>
-                                  {getFullForm(rev.uni) || "Student"}
-                              </p>
-                          </div>
-                      </div>
-                      <p className={`text-xs italic leading-relaxed line-clamp-4 relative pl-3 border-l-2 ${theme.text_main} ${theme.border}`}>
-                          "{rev.message}"
-                      </p>
-                    </div>
-                    
-                    <div className={`flex items-center justify-between mt-5 pt-4 border-t ${theme.border}`}>
-                        <div className="flex text-amber-400">
-                            {[...Array(5)].map((_, i) => (
-                                <Star key={i} size={12} fill={i < rev.rating ? "currentColor" : "none"} className={i < rev.rating ? "text-amber-400" : "text-slate-200"} />
-                            ))}
+                    <div className="flex items-start gap-4 mb-4">
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-md ${theme.accent_bg}`}>
+                            {review.name ? review.name[0] : <User size={18}/>}
                         </div>
-                        <span className={`text-[9px] font-medium ${theme.text_sub}`}>
-                            {rev.branch}
-                        </span>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                {review.name}
+                                {isOwn && <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-md">ME</span>}
+                            </h4>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${theme.text_main}`}>
+                                {review.uni || "University"} • {review.branch || "Student"}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-slate-600 leading-relaxed italic mb-4">
+                        "{review.message}"
+                    </p>
+
+                    <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                                key={star} 
+                                size={14} 
+                                className={`${star <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}`} 
+                            />
+                        ))}
                     </div>
                 </div>
-              );
-            })
-        ) : (
-            <div className={`col-span-3 text-center py-12 rounded-2xl border border-dashed ${theme.border} ${theme.card_bg}`}>
-                <p className={`text-sm font-medium ${theme.text_sub}`}>Be the first to share your journey.</p>
+            );
+        }) : (
+            <div className="col-span-full py-8 text-center bg-white/50 rounded-3xl border border-dashed border-slate-200">
+                <p className="text-sm text-slate-400 font-medium">No vibes yet. Start the wave! 🌊</p>
             </div>
         )}
       </div>
+
     </section>
   );
 }

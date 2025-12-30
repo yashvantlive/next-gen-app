@@ -4,7 +4,7 @@ const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: false,
+  disable: process.env.NODE_ENV === "development", // Dev mode me PWA disable rahega (Recommended)
   
   runtimeCaching: [
     {
@@ -44,7 +44,7 @@ const withPWA = require("next-pwa")({
           path.startsWith("/profile")
         );
       },
-      handler: "NetworkFirst",
+      handler: "NetworkFirst", // Data always fresh, offline fallback
       options: {
         cacheName: "user-data",
         networkTimeoutSeconds: 5,
@@ -79,10 +79,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com", 
       },
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com", 
+      },
     ],
   },
 
-  // ✅ FIX: 'unsafe-none' is required for strict Firebase Auth popup flows
+  // ✅ FIX: 'unsafe-none' ensures Firebase Auth Popups work perfectly
   async headers() {
     return [
       {
@@ -90,7 +94,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'unsafe-none', // 👈 Changed to unsafe-none (Most permissive)
+            value: 'unsafe-none', 
           },
           {
             key: 'Cross-Origin-Embedder-Policy',

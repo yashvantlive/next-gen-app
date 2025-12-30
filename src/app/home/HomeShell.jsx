@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { doc, writeBatch, Timestamp, addDoc, collection, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseClient';
 import { MOODS } from '../../lib/moodConfig';
+import { getSafeTheme } from '../../lib/themeUtils';
 
 // Components
 import NavigationBar from '../../components/home/NavigationBar';
@@ -15,6 +16,8 @@ import ToolsGrid from '../../components/home/ToolsGrid';
 import ShareCard from '../../components/home/ShareCard';
 import CommunityWall from '../../components/home/CommunityWall';
 import ReviewModal from '../../components/home/ReviewModal';
+// 👇 IMPORT NEW MODAL
+import AllReviewsModal from '../../components/home/AllReviewsModal';
 
 // Engines
 import { calculateFocusScore } from '../../engines/FocusScoreEngine';
@@ -30,28 +33,13 @@ export default function HomeShell({
     isOpen: false, 
     editData: null 
   });
+
+  // ✅ NEW STATE: For "See All Reviews" Modal
+  const [isAllReviewsOpen, setIsAllReviewsOpen] = useState(false);
   
-  // 🛡️ CRITICAL FIX: SAFE THEME FALLBACK SYSTEM
-  // 1. Default Fallback: MOODS की पहली key (जैसे 'productive') निकालें
-  const defaultMoodKey = Object.keys(MOODS)[0] || 'productive'; 
-  
-  // 2. Validation: अगर currentMood valid नहीं है, तो default use करें
-  const activeMoodKey = (currentMood && MOODS[currentMood]) ? currentMood : defaultMoodKey;
-  
-  // 3. Extraction: अब activeMoodKey से डेटा निकालें (यह कभी undefined नहीं होगा)
-  const moodInfo = MOODS[activeMoodKey] || MOODS[defaultMoodKey];
-  
-  // 4. Safe Access: 'colors' को सुरक्षित तरीके से निकालें
-  const theme = moodInfo?.colors || {
-    // Fallback colors if config is missing (Emergency safety)
-    bg_app: "bg-slate-50",
-    text_main: "text-slate-900",
-    text_sub: "text-slate-500",
-    border: "border-slate-200",
-    accent_bg: "bg-indigo-600",
-    gradient_text: "from-indigo-600 to-violet-600",
-    card_style: "bg-white shadow-xl shadow-indigo-100/50 border border-white",
-  };
+  // Theme Safety
+  const moodInfo = getSafeTheme(currentMood);
+  const theme = moodInfo.colors;
 
   // --- BRAIN: Compute Stats ---
   const stats = useMemo(() => {
@@ -157,7 +145,7 @@ export default function HomeShell({
       <NavigationBar 
         user={user} 
         profile={profile} 
-        currentMood={activeMoodKey} // ✅ Use Safe Key
+        currentMood={currentMood}
         onMoodChange={onMoodChange} 
         theme={theme} 
       />
@@ -186,8 +174,6 @@ export default function HomeShell({
 
         {/* DASHBOARD GRID */}
         <section className="grid lg:grid-cols-12 gap-6 items-stretch"> 
-          
-          {/* LEFT COLUMN */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             <TodayTasks 
               tasks={stats.todaysTasksList} 
@@ -201,8 +187,6 @@ export default function HomeShell({
                 <StickyBrain theme={theme} />
             </div>
           </div>
-
-          {/* RIGHT COLUMN */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             <AcademicRadar progress={academicProgress} percent={stats.syllabusPercent} theme={theme} />
             <ToolsGrid theme={theme} />
@@ -216,22 +200,31 @@ export default function HomeShell({
             currentUserId={user?.uid} 
             onOpenReview={() => setReviewModal({ isOpen: true, editData: null })}
             onEditReview={handleEditReview}
+            // ✅ PASSING THE HANDLER
+            onSeeAll={() => setIsAllReviewsOpen(true)}
         />
 
-        {/* ✅ DYNAMIC SHARE CARD CONTAINER */}
         <div className="mt-16 mb-8 max-w-5xl mx-auto px-4">
             <div className={`transform hover:scale-[1.01] transition-all duration-300 rounded-2xl ${theme.card_style}`}>
                <ShareCard theme={theme} /> 
             </div>
         </div>
 
-        {/* REVIEW MODAL */}
+        {/* REVIEW MODAL (Write/Edit) */}
         <ReviewModal 
             isOpen={reviewModal.isOpen}
             editData={reviewModal.editData}
             onClose={() => setReviewModal({ isOpen: false, editData: null })}
             onSubmit={handleReviewSubmit}
             profile={profile}
+            theme={theme}
+        />
+
+        {/* ✅ ALL REVIEWS MODAL (Read Only) */}
+        <AllReviewsModal 
+            isOpen={isAllReviewsOpen}
+            onClose={() => setIsAllReviewsOpen(false)}
+            reviews={reviews}
             theme={theme}
         />
 
