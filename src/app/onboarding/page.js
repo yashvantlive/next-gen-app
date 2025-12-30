@@ -265,9 +265,9 @@ export default function OnboardingPage() {
                 
                 <div className="p-6 space-y-6">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-700">University / College</label>
+                        <label htmlFor="onboarding-university-select" className="text-sm font-semibold text-slate-700">University / College</label>
                         <div className="relative">
-                            <select 
+                            <select id="onboarding-university-select" name="onboarding-university-select"
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                             value={form.universityId} 
                             onChange={(e) => updateField("universityId", e.target.value)}
@@ -283,9 +283,9 @@ export default function OnboardingPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-700">Branch / Course</label>
+                        <label htmlFor="onboarding-branch-select" className="text-sm font-semibold text-slate-700">Branch / Course</label>
                         <div className="relative">
-                            <select 
+                            <select id="onboarding-branch-select" name="onboarding-branch-select"
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                             value={form.branchId} 
                             onChange={(e) => updateField("branchId", e.target.value)}
@@ -302,9 +302,9 @@ export default function OnboardingPage() {
 
                     <div className="grid grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-700">Year</label>
+                            <label htmlFor="onboarding-year-select" className="text-sm font-semibold text-slate-700">Year</label>
                             <div className="relative">
-                                <select 
+                                <select id="onboarding-year-select" name="onboarding-year-select"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                                 value={form.year} 
                                 onChange={(e) => updateField("year", Number(e.target.value))}
@@ -319,9 +319,9 @@ export default function OnboardingPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-700">Semester</label>
+                            <label htmlFor="onboarding-semester-select" className="text-sm font-semibold text-slate-700">Semester</label>
                             <div className="relative">
-                                <select 
+                                <select id="onboarding-semester-select" name="onboarding-semester-select"
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none transition-all appearance-none"
                                 value={form.semester} 
                                 onChange={(e) => updateField("semester", Number(e.target.value))}
@@ -348,10 +348,10 @@ export default function OnboardingPage() {
                     <div className="p-6 space-y-8">
                         {/* Skills Section */}
                         <div className="space-y-3">
-                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                            <div className="text-sm font-semibold text-slate-700 flex items-center justify-between">
                                 <span>Your Skills</span>
                                 <span className="text-xs font-normal text-slate-400">{skills.length} selected</span>
-                            </label>
+                            </div>
                             
                             <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
                                 {skills.length === 0 && <span className="text-slate-400 text-sm">Select skills below...</span>}
@@ -394,10 +394,10 @@ export default function OnboardingPage() {
 
                         {/* Interests Section */}
                         <div className="space-y-3">
-                            <label className="text-sm font-semibold text-slate-700 flex items-center justify-between">
+                            <div className="text-sm font-semibold text-slate-700 flex items-center justify-between">
                                 <span>Your Interests</span>
                                 <span className="text-xs font-normal text-slate-400">{interests.length} selected</span>
-                            </label>
+                            </div>
                             
                             <div className="min-h-[50px] p-3 border border-slate-200 rounded-xl bg-slate-50 flex flex-wrap gap-2">
                                 {interests.length === 0 && <span className="text-slate-400 text-sm">Select interests below...</span>}

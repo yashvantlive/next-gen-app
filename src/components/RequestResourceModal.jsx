@@ -76,7 +76,7 @@ export default function RequestResourceModal({ isOpen, onClose, authUser }) {
               
               {/* Type Selection */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Resource Type</label>
+                <div className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Resource Type</div>
                 <div className="grid grid-cols-3 gap-2">
                   {["Syllabus", "PYQ", "Todo/Notes"].map((t) => (
                     <button
@@ -97,8 +97,10 @@ export default function RequestResourceModal({ isOpen, onClose, authUser }) {
 
               {/* Subject Input */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Subject / Branch</label>
+                <label htmlFor="resource-subject" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Subject / Branch</label>
                 <input 
+                  id="resource-subject"
+                  name="resource-subject"
                   type="text" 
                   required
                   placeholder="e.g. Mathematics II, CSE Branch"
@@ -110,8 +112,10 @@ export default function RequestResourceModal({ isOpen, onClose, authUser }) {
 
               {/* Details Textarea */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Additional Details</label>
+                <label htmlFor="resource-details" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Additional Details</label>
                 <textarea 
+                  id="resource-details"
+                  name="resource-details"
                   required
                   rows="4"
                   placeholder="Describe specifically what you need..."

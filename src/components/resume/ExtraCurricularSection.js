@@ -36,8 +36,8 @@ export default function ExtraCurricularSection({ data, onChange }) {
             {/* Small Rectangle (Heading) */}
             <div className="w-1/3">
               <input
-                type="text"
-                placeholder="Heading (e.g. Debate)"
+                id={`extracurricular-heading-${item.id}`}
+                name={`extracurricular-heading-${item.id}`}
                 value={item.heading}
                 onChange={(e) => handleUpdate(item.id, 'heading', e.target.value)}
                 className="w-full p-2 border border-gray-200 rounded text-sm font-bold focus:outline-none focus:border-blue-500"
@@ -46,8 +46,8 @@ export default function ExtraCurricularSection({ data, onChange }) {
             
             {/* Large Rectangle (Description) */}
             <div className="w-2/3 relative">
-              <textarea
-                placeholder="Short description..."
+              <textarea                id={`extracurricular-description-${item.id}`}
+                name={`extracurricular-description-${item.id}`}                placeholder="Short description..."
                 value={item.description}
                 onChange={(e) => handleUpdate(item.id, 'description', e.target.value)}
                 rows={2}

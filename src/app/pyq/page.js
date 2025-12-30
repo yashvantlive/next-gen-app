@@ -281,9 +281,9 @@ export default function PYQPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-end">
                     {/* Uni */}
                     <div>
-                        <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">University</label>
+                        <label htmlFor="pyq-university-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">University</label>
                         <div className="relative">
-                            <select 
+                            <select id="pyq-university-select" name="pyq-university-select"
                                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer truncate" 
                                 value={publicFilters.universityId} 
                                 onChange={e => setPublicFilters({...publicFilters, universityId: e.target.value})}
@@ -302,9 +302,9 @@ export default function PYQPage() {
                     </div>
                     {/* Branch */}
                     <div>
-                        <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Branch</label>
+                        <label htmlFor="pyq-branch-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Branch</label>
                         <div className="relative">
-                            <select 
+                            <select id="pyq-branch-select" name="pyq-branch-select"
                                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer truncate" 
                                 value={publicFilters.branchId} 
                                 onChange={e => setPublicFilters({...publicFilters, branchId: e.target.value})}
@@ -323,9 +323,9 @@ export default function PYQPage() {
                     </div>
                     {/* Sem */}
                     <div>
-                        <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Semester</label>
+                        <label htmlFor="pyq-semester-select" className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">Semester</label>
                         <div className="relative">
-                            <select 
+                            <select id="pyq-semester-select" name="pyq-semester-select"
                                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 appearance-none cursor-pointer" 
                                 value={publicFilters.semester} 
                                 onChange={e => setPublicFilters({...publicFilters, semester: e.target.value})}
@@ -369,7 +369,7 @@ export default function PYQPage() {
             <div className="flex flex-col lg:flex-row gap-4 mb-8">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
+                    <input id="pyq-search" name="pyq-search"
                     type="text" 
                     placeholder="Search subject..." 
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-100 focus:border-violet-300 text-sm"
@@ -379,7 +379,7 @@ export default function PYQPage() {
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     <div className="relative min-w-[140px]">
-                        <select 
+                        <select id="pyq-filter-subject" name="pyq-filter-subject"
                         className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-100 appearance-none cursor-pointer font-medium text-slate-700"
                         value={selectedSubject}
                         onChange={(e) => setSelectedSubject(e.target.value)}
@@ -389,7 +389,7 @@ export default function PYQPage() {
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14}/>
                     </div>
                     <div className="relative min-w-[100px]">
-                        <select 
+                        <select id="pyq-filter-year" name="pyq-filter-year"
                         className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-100 appearance-none cursor-pointer font-medium text-slate-700"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
@@ -400,7 +400,7 @@ export default function PYQPage() {
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14}/>
                     </div>
                     <div className="relative min-w-[130px]">
-                        <select 
+                        <select id="pyq-filter-type" name="pyq-filter-type"
                         className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-100 appearance-none cursor-pointer font-medium text-slate-700"
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value)}
@@ -619,7 +619,7 @@ export default function PYQPage() {
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Write a Review</h3>
                 <div className="space-y-4">
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Rating</label>
+                      <div className="text-xs font-bold text-slate-500 uppercase">Rating</div>
                       <div className="flex gap-2 mt-1">
                          {[1,2,3,4,5].map(r => (
                             <button key={r} onClick={()=>setReviewForm({...reviewForm, rating: r})} className={`p-1 ${reviewForm.rating >= r ? 'text-amber-400' : 'text-slate-300'}`}><Star fill="currentColor" size={24}/></button>
@@ -627,8 +627,8 @@ export default function PYQPage() {
                       </div>
                    </div>
                    <div>
-                      <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
-                      <textarea className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
+                      <label htmlFor="pyq-review-message" className="text-xs font-bold text-slate-500 uppercase">Message</label>
+                      <textarea id="pyq-review-message" name="pyq-review-message" className="w-full mt-1 p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-violet-200 outline-none" rows="4" placeholder="How has You Learn helped you?" value={reviewForm.message} onChange={e => setReviewForm({...reviewForm, message: e.target.value})}></textarea>
                    </div>
                    <button onClick={handleReviewSubmit} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800">Submit Review</button>
                 </div>

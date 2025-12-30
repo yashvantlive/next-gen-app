@@ -69,14 +69,14 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, profile, theme,
 
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/50">
                <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Branch</label>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Branch</div>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700" title={getFullForm(profile?.branchId)}>
                      <BookOpen size={12} className="text-slate-400"/>
                      <span className="truncate max-w-[120px]">{getFullForm(profile?.branchId) || "Not Set"}</span>
                   </div>
                </div>
                <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">University</label>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">University</div>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700" title={getFullForm(profile?.universityId)}>
                      <Building size={12} className="text-slate-400"/>
                      <span className="truncate max-w-[120px]">{getFullForm(profile?.universityId) || "Not Set"}</span>
@@ -87,7 +87,7 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, profile, theme,
 
           {/* 4. RATING INPUT */}
           <div>
-             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Rate Experience</label>
+             <div className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Rate Experience</div>
              <div className="flex gap-3">
                 {[1, 2, 3, 4, 5].map((star) => (
                    <button 
@@ -107,8 +107,10 @@ export default function ReviewModal({ isOpen, onClose, onSubmit, profile, theme,
 
           {/* 5. REVIEW TEXT */}
           <div>
-             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Your Message</label>
+             <label htmlFor="review-message" className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Your Message</label>
              <textarea 
+                id="review-message"
+                name="review-message"
                 className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all resize-none"
                 placeholder="Share your feedback..."
                 value={message}

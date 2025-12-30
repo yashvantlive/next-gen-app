@@ -9,6 +9,8 @@ export default function SummarySection({ data, onChange }) {
       </div>
 
       <textarea
+        id="professional-summary"
+        name="professional-summary"
         value={data}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Motivated Computer Science student with strong programming skills in React, Node.js, and Firebase. Passionate about building scalable applications and solving real-world problems..."

@@ -59,9 +59,7 @@ export default function MusicPlayerWidget() {
            <div className="flex items-center gap-2 mb-4 px-1">
               <Volume2 size={14} className="text-slate-400"/>
               <input 
-                type="range" 
-                min="0" 
-                max="1" 
+                id="music-volume-slider" name="music-volume-slider"
                 step="0.01" 
                 value={volume} 
                 onChange={(e) => setVolume(parseFloat(e.target.value))} 

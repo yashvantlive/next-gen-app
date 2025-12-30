@@ -109,8 +109,8 @@ export default function ResumeLandingPage() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 uppercase">Full Name</label>
-                      <input 
+                      <label htmlFor="resume-full-name" className="text-xs font-semibold text-slate-500 uppercase">Full Name</label>
+                      <input id="resume-full-name" name="resume-full-name"
                         type="text" 
                         value={data.fullName}
                         onChange={(e) => setData({...data, fullName: e.target.value})}
@@ -118,8 +118,8 @@ export default function ResumeLandingPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 uppercase">Role / Branch</label>
-                      <input 
+                      <label htmlFor="resume-role" className="text-xs font-semibold text-slate-500 uppercase">Role / Branch</label>
+                      <input id="resume-role" name="resume-role"
                         type="text" 
                         value={data.role}
                         onChange={(e) => setData({...data, role: e.target.value})}
@@ -127,8 +127,8 @@ export default function ResumeLandingPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-500 uppercase">Summary</label>
-                      <textarea 
+                      <label htmlFor="resume-summary" className="text-xs font-semibold text-slate-500 uppercase">Summary</label>
+                      <textarea id="resume-summary" name="resume-summary"
                         value={data.summary}
                         onChange={(e) => setData({...data, summary: e.target.value})}
                         className="w-full mt-1 p-2 border border-slate-200 rounded-lg text-sm h-32 focus:ring-2 focus:ring-violet-500 outline-none resize-none leading-relaxed"

@@ -183,7 +183,7 @@ export default function TodoLandingPage() {
 
               {/* Input */}
               <form onSubmit={addTask} className="flex gap-2 relative z-10">
-                <input 
+                <input id="study-task-input" name="study-task-input"
                   type="text" 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

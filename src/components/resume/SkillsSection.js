@@ -57,8 +57,10 @@ export default function SkillsSection({ data, onChange, metadata }) {
             {/* Header with Toggle */}
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-bold text-gray-700 uppercase">{cat.label}</h3>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor={`show-${cat.id}`} className="relative inline-flex items-center cursor-pointer">
                 <input 
+                  id={`show-${cat.id}`}
+                  name={`show-${cat.id}`}
                   type="checkbox" 
                   className="sr-only peer"
                   checked={data[`show${cat.id}`] !== false} 
@@ -73,6 +75,8 @@ export default function SkillsSection({ data, onChange, metadata }) {
               <>
                 <div className="relative mb-3">
                   <input
+                    id={`skill-input-${cat.id}`}
+                    name={`skill-input-${cat.id}`}
                     type="text"
                     placeholder={`Type ${cat.label} and press Comma (,) or Enter...`}
                     className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
