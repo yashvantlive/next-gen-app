@@ -127,6 +127,10 @@ const PhysicsIcon = ({ Icon, color, containerRef, pointerRef, id, trackPosition,
 // --- ✨ PARTICLE CANVAS (150 Globules, 2x Speed, 3px-7px Size) ---
 const ParticleCanvas = ({ theme, iconPositions }) => {
   const canvasRef = useRef(null);
+  
+  // ✅ SAFE FALLBACK FOR PARTICLE COLOR
+  const particleColor = theme?.particle || "255, 255, 255";
+
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -139,7 +143,7 @@ const ParticleCanvas = ({ theme, iconPositions }) => {
       let pColor;
       if (variant > 0.8) pColor = "255, 255, 255"; // White
       else if (variant > 0.6) pColor = "0, 0, 0";   // Black
-      else pColor = theme.particle;                 // Theme
+      else pColor = particleColor;                 // Theme (Safe)
 
       return {
         x: Math.random() * canvas.width, y: Math.random() * canvas.height,
@@ -240,7 +244,7 @@ const ParticleCanvas = ({ theme, iconPositions }) => {
       animationId = requestAnimationFrame(render);
     };
     render(); return () => { cancelAnimationFrame(animationId); window.removeEventListener('resize', updateSize); };
-  }, [theme, iconPositions]); 
+  }, [theme, iconPositions, particleColor]); 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none opacity-60" />;
 };
 
@@ -261,6 +265,14 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
   };
   const handlePointerLeave = () => { pointerRef.current = { x: -1000, y: -1000 }; };
 
+  // 🛡️ CRITICAL FIX: SAFE FALLBACK THEME
+  // Prevents crash when 'theme' is undefined
+  const safeTheme = theme || {
+    gradient: "from-slate-900 to-slate-800",
+    particle: "255, 255, 255",
+    icons: []
+  };
+
   return (
     <div 
       ref={coverRef}
@@ -268,18 +280,20 @@ const PhysicsBackground = memo(({ theme, filters, touchEnabled }) => {
       onMouseLeave={handlePointerLeave}
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerLeave}
-      className={`h-64 sm:h-72 lg:h-80 w-full bg-gradient-to-r ${theme.gradient} relative overflow-hidden rounded-t-[2.5rem] cursor-crosshair touch-none select-none transition-all duration-300`}
-      // ✅ Applies filters to everything (Gradient + Particles + Icons)
+      // ✅ Use safeTheme here
+      className={`h-64 sm:h-72 lg:h-80 w-full bg-gradient-to-r ${safeTheme.gradient} relative overflow-hidden rounded-t-[2.5rem] cursor-crosshair touch-none select-none transition-all duration-300`}
       style={{ filter: `hue-rotate(${filters.hue}deg) saturate(${filters.saturation}%) brightness(${filters.brightness}%)` }} 
     >
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-soft-light"></div>
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
-        <ParticleCanvas theme={theme} iconPositions={iconPositions} />
+        {/* ✅ Pass safeTheme to ParticleCanvas */}
+        <ParticleCanvas theme={safeTheme} iconPositions={iconPositions} />
         
-        {theme.icons.map((Icon, idx) => (
+        {/* ✅ Use safeTheme.icons for mapping */}
+        {safeTheme.icons && safeTheme.icons.map((Icon, idx) => (
           <PhysicsIcon
-            key={idx} id={`icon-${idx}`} Icon={Icon} color={theme.particle}
+            key={idx} id={`icon-${idx}`} Icon={Icon} color={safeTheme.particle}
             containerRef={coverRef} pointerRef={pointerRef} trackPosition={trackIconPosition} iconPositions={iconPositions}
           />
         ))}
