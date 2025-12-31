@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { StickyNote, CheckCircle2, Trash2 } from "lucide-react";
 
@@ -5,12 +7,12 @@ export default function StickyBrain({ theme }) {
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("stickyNote");
+    const saved = (typeof window !== "undefined" ? localStorage.getItem("stickyNote") : null);
     if (saved) setNote(saved);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("stickyNote", note);
+    (typeof window !== "undefined" && localStorage.setItem("stickyNote", note));
   }, [note]);
 
   return (

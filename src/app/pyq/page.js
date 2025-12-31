@@ -102,7 +102,7 @@ export default function PYQPage() {
 
   // 3. LOAD PUBLIC FILTERS
   useEffect(() => {
-    const savedFilters = localStorage.getItem("public_pyq_filters");
+    const savedFilters = (typeof window !== "undefined" ? localStorage.getItem("public_pyq_filters") : null);
     if (savedFilters) {
       setPublicFilters(JSON.parse(savedFilters));
     }
@@ -139,7 +139,7 @@ export default function PYQPage() {
             setLoading(false);
             return;
         }
-        localStorage.setItem("public_pyq_filters", JSON.stringify(publicFilters));
+        (typeof window !== "undefined" && localStorage.setItem("public_pyq_filters", JSON.stringify(publicFilters)));
 
         q = query(
             collection(db, "pyqs"),
@@ -585,7 +585,7 @@ export default function PYQPage() {
               </div>
               <div className="flex gap-2">
                 <button 
-                  onClick={() => window.print()} 
+                  onClick={() => (typeof window !== "undefined" && window.print())} 
                   className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all hidden sm:block" 
                   title="Print"
                 >

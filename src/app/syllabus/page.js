@@ -108,7 +108,7 @@ function SyllabusContent() {
 
   // 3. LOAD PUBLIC FILTERS
   useEffect(() => {
-    const savedFilters = localStorage.getItem("public_syllabus_filters");
+    const savedFilters = (typeof window !== "undefined" ? localStorage.getItem("public_syllabus_filters") : null);
     if (savedFilters) {
       setPublicFilters(JSON.parse(savedFilters));
     }
@@ -118,7 +118,7 @@ function SyllabusContent() {
   const handleFilterChange = (key, value) => {
     const newFilters = { ...publicFilters, [key]: value };
     setPublicFilters(newFilters);
-    localStorage.setItem("public_syllabus_filters", JSON.stringify(newFilters));
+    (typeof window !== "undefined" && localStorage.setItem("public_syllabus_filters", JSON.stringify(newFilters)));
   };
 
   // 5. AUTH CHECK

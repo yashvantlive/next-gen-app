@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import Link from "next/link"; 
+import Link from "next/link";
 import { onAuthChange, getUserProfile, db } from "../../lib/firebaseClient";
 import { 
   EXAMS, BRANCHES, parseTopics, parseRawSyllabus, saveExamSyllabus, getExamSyllabus, syncTopicToTodo 
@@ -42,6 +42,23 @@ export default function ExamsPage() {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [editingTopicId, setEditingTopicId] = useState(null); 
 
+  // --- 🆕 BACK NAVIGATION LOGIC ---
+  // Use a client-side safe approach to read the `from` query param to avoid
+  // Next.js prerender/suspense issues with `useSearchParams()` on pages.
+  const [fromPage, setFromPage] = useState(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setFromPage(params.get('from'));
+  }, []);
+
+  // Determine back link dynamically
+  const backLink = useMemo(() => {
+    if (fromPage === "profile") return "/profile";
+    if (fromPage === "landing") return "/";
+    return "/home"; // Default fallback
+  }, [fromPage]);
+
   // --- 1. AUTH & SCROLL ---
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
@@ -54,7 +71,6 @@ export default function ExamsPage() {
     });
 
     const handleScroll = () => {
-      // Show smart header after scrolling down 180px
       setShowStickyHeader(window.scrollY > 180);
     };
     window.addEventListener("scroll", handleScroll);
@@ -75,10 +91,10 @@ export default function ExamsPage() {
         setSyllabusData({
             subjects: data.subjects || [],
             pdfLink: data.syllabusPdf || "",
-            rawText: data.rawSyllabusText || "" // ✅ Load saved text
+            rawText: data.rawSyllabusText || "" 
         });
         setPdfInput(data.syllabusPdf || "");
-        setRawText(data.rawSyllabusText || ""); // ✅ Populate text area
+        setRawText(data.rawSyllabusText || ""); 
       } else {
         setSyllabusData({ subjects: [], pdfLink: "", rawText: "" });
         setPdfInput("");
@@ -100,7 +116,7 @@ export default function ExamsPage() {
         const snap = await getDoc(ref);
         if (snap.exists()) setUserProgress(snap.data().completedTopics || {});
       } else {
-        const local = localStorage.getItem(`prog_${key}`);
+        const local = (typeof window !== "undefined" ? localStorage.getItem(`prog_${key}`) : null);
         if (local) setUserProgress(JSON.parse(local));
       }
     };
@@ -133,13 +149,10 @@ export default function ExamsPage() {
     if(!rawText.trim()) return alert("Please paste syllabus text first!");
     const parsedSubjects = parseRawSyllabus(rawText);
     
-    // Note: In a real merge scenario, you might use mergeSyllabusData here.
-    // For now, appending/replacing based on your preference. 
-    // Assuming append new ones for safety as per previous context.
     setSyllabusData(prev => ({
         ...prev, 
         subjects: [...prev.subjects, ...parsedSubjects],
-        rawText: rawText // Update local state for saving
+        rawText: rawText 
     }));
     
     setUnsavedChanges(true);
@@ -173,7 +186,6 @@ export default function ExamsPage() {
   const saveMasterSyllabus = async () => { 
       if (!confirm("Publish changes?")) return; 
       setLoading(true); 
-      // ✅ FIX: Save rawText to Firestore
       const finalData = { ...syllabusData, rawText: rawText };
       await saveExamSyllabus(selectedExam, selectedBranch, finalData); 
       setUnsavedChanges(false); 
@@ -192,7 +204,7 @@ export default function ExamsPage() {
       await setDoc(ref, { completedTopics: newProg }, { merge: true });
       await syncTopicToTodo(user.uid, topicName, subjectName, selectedExam, newStatus);
     } else {
-      localStorage.setItem(`prog_${key}`, JSON.stringify(newProg));
+      (typeof window !== "undefined" && localStorage.setItem(`prog_${key}`, JSON.stringify(newProg)));
     }
   };
 
@@ -202,17 +214,16 @@ export default function ExamsPage() {
   };
 
   const scrollToTop = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  const backLink = user ? "/home" : "/";
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 pb-20 md:pb-0">
       
       {/* ==============================================================
           MOBILE: ANIMATED STICKY HEADER (Appears on Scroll)
-          - Contains Back, Branding, and Compact Info
       ============================================================== */}
       <div className={`md:hidden fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-md border-b border-slate-200 px-4 py-3 flex items-center justify-between transition-transform duration-300 ${showStickyHeader ? 'translate-y-0' : '-translate-y-full'}`}>
          <div className="flex items-center gap-3">
+            {/* ✅ DYNAMIC BACK LINK */}
             <Link href={backLink} className="p-1.5 bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900">
                 <ArrowLeft size={18}/>
             </Link>
@@ -229,18 +240,17 @@ export default function ExamsPage() {
 
       {/* ==============================================================
           MOBILE: TOP FILTER SECTION (Visible at start)
-          - Contains Back Button, Admin Toggle, and Full Dropdowns
       ============================================================== */}
       <div className="md:hidden bg-white border-b border-slate-200 p-5">
          <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
+                {/* ✅ DYNAMIC BACK LINK */}
                 <Link href={backLink} className="text-slate-500 p-1"><ArrowLeft size={20}/></Link>
                 <h1 className="font-black text-xl text-slate-800 flex items-center gap-2">
                     <BookOpen className="text-violet-600" size={20}/> EXAM HUB
                 </h1>
             </div>
             
-            {/* Mobile Admin Toggle (Restored) */}
             {isRealAdmin && (
                 <button 
                     onClick={() => setPreviewMode(!previewMode)}
@@ -251,7 +261,6 @@ export default function ExamsPage() {
             )}
          </div>
 
-         {/* Full Selectors */}
          <div className="grid grid-cols-2 gap-3">
             <div>
                 <label htmlFor="exam-select" className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Exam</label>
@@ -272,8 +281,9 @@ export default function ExamsPage() {
           DESKTOP SIDEBAR
       ============================================================== */}
       <aside className="hidden md:flex w-72 bg-white border-r border-slate-200 p-6 flex-col gap-6 sticky top-0 h-screen z-20">
+        {/* ✅ DYNAMIC BACK LINK */}
         <Link href={backLink} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors mb-2">
-            <ArrowLeft size={14}/> Back to Home
+            <ArrowLeft size={14}/> Back to {fromPage === 'profile' ? 'Profile' : 'Home'}
         </Link>
         <div className="flex justify-between items-center">
           <h1 className="font-black text-2xl text-slate-800 flex items-center gap-2"><BookOpen className="text-violet-600"/> EXAM HUB</h1>
@@ -305,7 +315,7 @@ export default function ExamsPage() {
       </aside>
 
       {/* ==============================================================
-          MAIN CONTENT AREA
+          MAIN CONTENT AREA (Same as before)
       ============================================================== */}
       <main className="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
         {selectedExam !== "GATE" ? (
@@ -332,10 +342,8 @@ export default function ExamsPage() {
                     <div className="mb-8 bg-white border-2 border-slate-200 p-6 rounded-2xl shadow-sm">
                         <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4 text-lg"><Wand2 size={20} className="text-violet-600"/> Master Parser</h3>
                         <div className="space-y-4">
-                            {/* Updated: text-base to prevent mobile zoom */}
                             <input id="master-pdf-link" name="master-pdf-link" type="text" placeholder="Paste PDF Link Here..." className="w-full p-3 rounded-lg border border-slate-300 text-base bg-white font-medium text-slate-900 focus:ring-2 focus:ring-violet-200 outline-none" value={pdfInput} onChange={(e) => handlePdfUpdate(e.target.value)} />
                             <div className="relative">
-                                {/* Updated: text-base to prevent mobile zoom */}
                                 <textarea id="master-raw-text" name="master-raw-text" rows={8} placeholder={`Paste Raw Text from PDF here...`} className="w-full p-4 rounded-lg border border-slate-300 text-base font-mono bg-white text-slate-900 outline-none resize-y focus:ring-2 focus:ring-violet-200" value={rawText} onChange={(e) => setRawText(e.target.value)} />
                                 <div className="absolute bottom-4 right-4">
                                     <button onClick={handleAutoParse} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-black flex items-center gap-2 shadow-lg"><RefreshCcw size={14}/> Update Structure</button>
@@ -352,7 +360,6 @@ export default function ExamsPage() {
                             return (
                                 <div key={sectionTitle} className="animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
                                     
-                                    {/* SECTION HEADER - STATIC (Sticky Removed to prevent overlap) */}
                                     <div 
                                         onClick={() => setExpandedSections(p => ({...p, [sectionTitle]: !p[sectionTitle]}))} 
                                         className={`p-3 md:p-4 rounded-xl flex items-center justify-between cursor-pointer border transition-all select-none shadow-sm ${isSecOpen ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'}`}
@@ -377,7 +384,6 @@ export default function ExamsPage() {
                                                 return (
                                                     <div key={subject.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden relative">
                                                         
-                                                        {/* SUBJECT HEADER - STATIC (Sticky Removed) */}
                                                         <div className="bg-white p-3 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors shadow-sm">
                                                             <div className="flex items-center gap-3 w-full">
                                                                 <button onClick={() => setExpandedSubjects(p => ({...p, [subject.id]: !p[subject.id]}))} className="p-1.5 md:p-2 bg-white border rounded-lg hover:bg-slate-50 shrink-0">
@@ -386,7 +392,6 @@ export default function ExamsPage() {
                                                                 <div className="flex-1 min-w-0">
                                                                     {isAdmin ? (
                                                                         <div className="space-y-2">
-                                                                            {/* Updated: text-base for zoom prevention */}
                                                                             <input id={`subject-name-${sIdx}`} name={`subject-name-${sIdx}`} value={subject.name} onChange={(e) => updateSubjectField(sIdx, 'name', e.target.value)} className="font-bold text-lg bg-transparent border-b border-dashed border-slate-300 w-full focus:border-indigo-500 outline-none text-slate-900" />
                                                                             <div className="flex gap-2 items-center">
                                                                                 <input id={`subject-section-${sIdx}`} name={`subject-section-${sIdx}`} value={subject.section} onChange={(e) => updateSubjectField(sIdx, 'section', e.target.value)} className="text-xs bg-slate-50 p-1 border rounded w-full md:w-48" placeholder="Section Name" />
@@ -406,7 +411,6 @@ export default function ExamsPage() {
                                                             </div>
                                                         </div>
 
-                                                        {/* TOPICS LIST */}
                                                         {isExp && (
                                                             <div>
                                                                 {isAdmin && (
@@ -425,16 +429,13 @@ export default function ExamsPage() {
                                                                             <div key={tIdx} className={`p-3 md:p-4 transition-colors ${isDone ? 'bg-emerald-50/30' : 'hover:bg-slate-50'}`}>
                                                                                 <div className="flex items-start justify-between gap-3">
                                                                                     
-                                                                                    {/* LEFT: Checkbox + Name */}
                                                                                     <div className="flex items-start gap-3 flex-1 min-w-0">
                                                                                         <button onClick={() => toggleTopic(subject.name, topic.name)} className={`mt-0.5 shrink-0 ${isDone ? "text-emerald-500" : "text-slate-300 hover:text-indigo-500"}`}>{isDone ? <CheckSquare size={20}/> : <Square size={20}/>}</button>
                                                                                         <div className="flex flex-col pt-0.5">
-                                                                                            {/* Wraps long text correctly */}
                                                                                             <span className={`text-sm font-medium leading-snug break-words ${isDone ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{topic.name}</span>
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* RIGHT: Actions & Icons */}
                                                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                                                         {topic.resources?.map((res, rIdx) => (
                                                                                             <a key={rIdx} href={res.url} target="_blank" rel="noreferrer" className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors ${res.type === 'pdf' ? 'text-blue-500' : 'text-red-500'}`} title={res.type.toUpperCase()}>{res.type === 'pdf' ? <FileText size={16}/> : <Youtube size={18}/>}</a>
@@ -444,7 +445,6 @@ export default function ExamsPage() {
                                                                                     </div>
                                                                                 </div>
 
-                                                                                {/* ADMIN LINK MANAGER */}
                                                                                 {isAdmin && isEditing && (
                                                                                     <div className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100 animate-in slide-in-from-top-2">
                                                                                         <div className="flex items-center justify-between mb-2">
@@ -463,7 +463,6 @@ export default function ExamsPage() {
                                                                                             ))}
                                                                                         </div>
                                                                                         <div className="flex gap-2">
-                                                                                            {/* Updated: text-base to prevent mobile zoom */}
                                                                                             <input id={`url-input-${editKey}`} name={`url-input-${editKey}`} placeholder="Paste Link..." className="flex-1 p-2 text-base border rounded outline-none focus:border-indigo-500" />
                                                                                             <button onClick={() => { const el = document.getElementById(`url-input-${editKey}`); addResource(sIdx, tIdx, 'yt', el.value); el.value=''; }} className="px-3 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold hover:bg-red-200">+ YT</button>
                                                                                             <button onClick={() => { const el = document.getElementById(`url-input-${editKey}`); addResource(sIdx, tIdx, 'pdf', el.value); el.value=''; }} className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold hover:bg-blue-200">+ PDF</button>

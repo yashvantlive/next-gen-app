@@ -1,3 +1,5 @@
+'use client';
+
 // components/ShareButton.jsx
 import { Share2 } from 'lucide-react';
 

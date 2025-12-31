@@ -1,4 +1,4 @@
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,52 +20,42 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only once
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+// Internal initialization (Not exported to avoid conflicts)
+const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+
+// --- AUTH FUNCTIONS ---
 
 export async function signInWithGoogle() {
   try {
-    console.log('🟢 Initiating Google sign-in (popup)...');
     googleProvider.setCustomParameters({ prompt: 'select_account' });
     const res = await signInWithPopup(auth, googleProvider);
-    console.log('✅ signInWithGoogle popup success:', res);
     return res;
   } catch (err) {
-    console.error('signInWithGoogle popup error:', err);
-    const msg = String(err?.code || err?.message || "").toLowerCase();
-    if (msg.includes('popup') || msg.includes('blocked') || msg.includes('redirect')) {
-      try {
-        console.log('🔁 Popup blocked — falling back to redirect sign-in');
-        googleProvider.setCustomParameters({ prompt: 'select_account' });
+    console.error('Popup failed, trying redirect...', err);
+    if (err.message.includes('Cross-Origin-Opener-Policy') || err.code === 'auth/popup-blocked') {
         await signInWithRedirect(auth, googleProvider);
         return { redirected: true };
-      } catch (err2) {
-        console.error('signInWithGoogle redirect fallback failed:', err2);
-        throw err2;
-      }
     }
     throw err;
   }
 }
 
-export function signOut() {
+export function logOut() {
   return firebaseSignOut(auth);
 }
+export const signOut = logOut;
 
 export function onAuthChange(cb) {
   return onAuthStateChanged(auth, cb);
 }
 
-// Firestore helpers
+// --- FIRESTORE HELPER FUNCTIONS ---
+
 export async function getUserProfile(uid) {
   if (!uid) return null;
   const ref = doc(db, "users", uid);
@@ -72,36 +63,26 @@ export async function getUserProfile(uid) {
     const snap = await getDoc(ref);
     return snap.exists() ? snap.data() : null;
   } catch (err) {
-    console.error("getUserProfile error:", err);
-    if (err?.code === "permission-denied" || /permission|insufficient/i.test(err?.message || "")) {
-       // Silent fail or return null to prevent app crash
-       return null; 
-    }
-    throw err;
+    return null;
   }
 }
 
 export async function setUserProfile(uid, data) {
-  if (!uid) throw new Error("UID required to set user profile");
+  if (!uid) throw new Error("UID required");
   const ref = doc(db, "users", uid);
-  try {
-    await setDoc(ref, data, { merge: true });
-    return true;
-  } catch (err) {
-    console.error("setUserProfile error:", err);
-    throw err;
-  }
+  await setDoc(ref, data, { merge: true });
+  return true;
 }
 
 export async function initializeUserRole(uid) {
   if (!uid) return;
   const ref = doc(db, "users", uid);
-  try {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { role: "user" }, { merge: true });
-    }
-  } catch (err) {
-    console.error("initializeUserRole error:", err);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, { role: "user", createdAt: new Date().toISOString() }, { merge: true });
   }
 }
+
+// ✅ FIX: Removed 'app' and 'firebaseApp' from exports completely.
+// Only exporting the tools your app actually uses.
+export { auth, db, storage, googleProvider };

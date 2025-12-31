@@ -1,11 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import AuthButtons from "../../../components/AuthButtons"; 
+import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
+// Import paths ensures they match your structure
+import AuthButtons from "../../../components/AuthButtons"; 
+import { onAuthChange } from "../../../lib/firebaseClient"; 
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  // ✅ Feature: अगर यूजर पहले से लॉग इन है, तो होम पर भेजें
+  useEffect(() => {
+    const unsubscribe = onAuthChange((user) => {
+      if (user) {
+        router.replace("/home"); // 'replace' history loop se bachata hai
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 font-sans text-slate-900">
       
@@ -30,8 +45,10 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Auth Buttons */}
-            <AuthButtons />
+            {/* ✅ FIXED: Auth Buttons Centered */}
+            <div className="flex justify-center w-full mb-6">
+               <AuthButtons />
+            </div>
 
             <div className="mt-8 relative">
               <div className="absolute inset-0 flex items-center">

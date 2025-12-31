@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { Trophy, ArrowRight, BookOpen, BarChart3, ChevronRight, Zap, Sparkles } from "lucide-react";
+import { Target, Trophy, ArrowRight, BookOpen, BarChart3, ChevronRight, Zap, Sparkles } from "lucide-react";
 import { useExamProgress } from "../../hooks/useExamProgress";
 
 export default function ExamEntryCard({ userId }) {

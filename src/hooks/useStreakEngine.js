@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
 export function useStreakEngine(activityCount) {
@@ -5,8 +7,8 @@ export function useStreakEngine(activityCount) {
 
   useEffect(() => {
     const today = new Date().toDateString();
-    const lastActive = localStorage.getItem("lastActiveDate");
-    const currentStreak = parseInt(localStorage.getItem("userStreak") || "0");
+    const lastActive = (typeof window !== "undefined" ? localStorage.getItem("lastActiveDate") : null);
+    const currentStreak = parseInt((typeof window !== "undefined" ? localStorage.getItem("userStreak") : null) || "0");
 
     if (activityCount > 0) {
       if (lastActive !== today) {
@@ -18,13 +20,13 @@ export function useStreakEngine(activityCount) {
           // Continued streak
           const newStreak = currentStreak + 1;
           setStreak(newStreak);
-          localStorage.setItem("userStreak", newStreak.toString());
+          (typeof window !== "undefined" && localStorage.setItem("userStreak", newStreak.toString()));
         } else {
           // Broken streak or fresh start
           setStreak(1);
-          localStorage.setItem("userStreak", "1");
+          (typeof window !== "undefined" && localStorage.setItem("userStreak", "1"));
         }
-        localStorage.setItem("lastActiveDate", today);
+        (typeof window !== "undefined" && localStorage.setItem("lastActiveDate", today));
       } else {
         // Already active today
         setStreak(currentStreak);

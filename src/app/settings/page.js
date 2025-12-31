@@ -163,7 +163,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><Globe size={18} /></div>
                         <div>
-                            <label htmlFor="app-language" className="font-bold text-slate-800 cursor-pointer">App Language</label>
+                            <p className="font-bold text-slate-800">App Language</p>
                             <p className="text-xs text-slate-500">Currently only English is supported.</p>
                         </div>
                     </div>
