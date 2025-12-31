@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { MOODS } from '../lib/moodConfig';
 
@@ -6,7 +8,7 @@ export function useMoodPersistence() {
 
   // Hydrate from Memory
   useEffect(() => {
-    const saved = localStorage.getItem("userMood");
+    const saved = (typeof window !== "undefined" ? localStorage.getItem("userMood") : null);
     if (saved && MOODS[saved]) {
       setCurrentMood(saved);
     }
@@ -16,7 +18,7 @@ export function useMoodPersistence() {
   const setMood = (moodId) => {
     if (MOODS[moodId]) {
       setCurrentMood(moodId);
-      localStorage.setItem("userMood", moodId);
+      (typeof window !== "undefined" && localStorage.setItem("userMood", moodId));
     }
   };
 

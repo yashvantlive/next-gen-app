@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "check": "node scripts/pre-deploy-check.js",
+    "pre-deploy": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

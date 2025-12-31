@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+// ✅ Ensure proper named imports
 import { onAuthChange, getUserProfile } from '../lib/firebaseClient';
 
 export function useAuthHydration() {
@@ -9,27 +10,54 @@ export function useAuthHydration() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsub = onAuthChange(async (u) => {
-      if (!u) {
-        router.push("/auth/login");
+    let isMounted = true;
+
+    // Safety check: Verify imports exist before running effect
+    if (typeof onAuthChange !== 'function' || typeof getUserProfile !== 'function') {
+      console.error("🔥 Critical Error: Firebase functions not imported correctly. Check src/lib/firebaseClient.js");
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthChange(async (currentUser) => {
+      if (!isMounted) return;
+
+      // 1. If not logged in -> Redirect to Login
+      if (!currentUser) {
+        console.log("🚫 No user found, redirecting to login...");
+        router.replace("/auth/login"); // 'replace' prevents back-button loops
         return;
       }
-      setUser(u);
+
+      // 2. Set User State
+      setUser(currentUser);
       
       try {
-        const p = await getUserProfile(u.uid);
-        if (!p?.branchId) {
-          router.push("/onboarding");
+        // 3. Fetch Profile
+        const userProfile = await getUserProfile(currentUser.uid);
+        
+        if (!isMounted) return;
+
+        // 4. If profile missing or incomplete (no branchId) -> Redirect to Onboarding
+        if (!userProfile || !userProfile.branchId) {
+          console.log("⚠️ Profile incomplete, redirecting to onboarding...");
+          router.replace("/onboarding");
           return;
         }
-        setProfile(p);
+
+        setProfile(userProfile);
       } catch (err) {
-        console.error("Hydration Error:", err);
+        console.error("❌ Auth Hydration Error:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     });
-    return () => unsub();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [router]);
 
   return { user, profile, loading };

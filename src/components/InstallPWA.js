@@ -23,7 +23,7 @@ export default function InstallPWA() {
     if (isStandalone) return; // Don't show if already installed
 
     // Check if user already dismissed it
-    const hasSeenPopup = localStorage.getItem("pwa-popup-seen");
+    const hasSeenPopup = (typeof window !== "undefined" ? localStorage.getItem("pwa-popup-seen") : null);
     if (hasSeenPopup) return;
 
     const handler = (e) => {
@@ -48,14 +48,14 @@ export default function InstallPWA() {
       setDeferredPrompt(null);
       setShowPopup(false);
       // Optional: Mark as seen so it doesn't show again even if they uninstall later without clearing cache
-      localStorage.setItem("pwa-popup-seen", "true"); 
+      (typeof window !== "undefined" && localStorage.setItem("pwa-popup-seen", "true")); 
     }
   };
 
   const handleDismiss = () => {
     setShowPopup(false);
     // Remember that user dismissed it
-    localStorage.setItem("pwa-popup-seen", "true");
+    (typeof window !== "undefined" && localStorage.setItem("pwa-popup-seen", "true"));
   };
 
   if (!isMounted || !showPopup) return null;

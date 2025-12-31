@@ -116,7 +116,11 @@ export default function ProjectsSection({ data, onAdd, onUpdate, onDelete }) {
                 {/* Bullet Points (Single Column) */}
                 <div className="mt-4">
                     <div className="flex justify-between items-end mb-2">
-                        <label htmlFor={points.length ? `project-point-${proj.id}-${points[0].id}` : undefined} className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</label>
+                        {points.length ? (
+                          <label htmlFor={`project-point-${proj.id}-${points[0].id}`} className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</label>
+                        ) : (
+                          <p className="block text-xs font-bold text-gray-500 uppercase">Key Features / Details</p>
+                        )}
                         <button 
                             onClick={() => addPoint(proj.id)}
                             className="text-xs flex items-center gap-1 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"

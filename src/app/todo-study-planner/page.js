@@ -29,7 +29,7 @@ export default function TodoLandingPage() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("demo_tasks");
+    const saved = (typeof window !== "undefined" ? localStorage.getItem("demo_tasks") : null);
     if (saved) {
       setTasks(JSON.parse(saved));
     } else {
@@ -40,7 +40,7 @@ export default function TodoLandingPage() {
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem("demo_tasks", JSON.stringify(tasks));
+      (typeof window !== "undefined" && localStorage.setItem("demo_tasks", JSON.stringify(tasks)));
     }
   }, [tasks, isLoaded]);
 
